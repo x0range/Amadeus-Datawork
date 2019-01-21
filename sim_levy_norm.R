@@ -3,7 +3,7 @@
 rm(list = ls()) # clear environment
 gc() # garbage collection
 
-pacman::p_load(stabledist,tidyverse,foreach,doParallel,reshape,xtable) # load packages
+pacman::p_load(stabledist,tidyverse,foreach,doParallel,reshape) # load packages
 
 # n <- 1000000
 # b <- n/10
@@ -20,7 +20,7 @@ pacman::p_load(stabledist,tidyverse,foreach,doParallel,reshape,xtable) # load pa
 # hist(norm_cut, breaks = b)
 # mtext(paste("n = ", n, sep = ''), side = 3, line = -25, outer = TRUE)
 
-if(!file.exists('C:/Users/JulianW/Documents/Work/Productivity Dispersion/testsd.Rda')){ # Do not run the simulation again if previous results are saved
+if(!file.exists('C:/Users/JulianW/Documents/Work/Productivity Dispersion/sim_graphs/testsd.Rda')){ # Do not run the simulation again if previous results are saved
   alpha <- 1.7 # Levy parameters
   beta <- 0
   gamma <- 1
@@ -43,10 +43,10 @@ if(!file.exists('C:/Users/JulianW/Documents/Work/Productivity Dispersion/testsd.
   stopCluster(cl) # close the backend
   time <- end_time - start_time # 1h48m
   
-  save(testsd, file = 'C:/Users/JulianW/Documents/Work/Productivity Dispersion/testsd.Rda') # save results
-  rm(alpha, beta, gamma, delta, i, start_time, end_time, time)
+  save(testsd, file = 'C:/Users/JulianW/Documents/Work/Productivity Dispersion/sim_graphs/testsd.Rda') # save results
+  rm(alpha, beta, gamma, delta, i, start_time, end_time)
 } else {
-  load('C:/Users/JulianW/Documents/Work/Productivity Dispersion/testsd.Rda') # if the results exist already, just load them to save time
+  load('C:/Users/JulianW/Documents/Work/Productivity Dispersion/sim_graphs/testsd.Rda') # if the results exist already, just load them to save time
 }
 
 sd_sum <- as.data.frame(testsd) # create DF
@@ -66,7 +66,7 @@ sd_sum_srt <- sd_sum %>% # keep the statistics we are interested in
   select(-value)
   
 # Plot the standard deviations
-pdf('C:/Users/JulianW/Documents/Work/Productivity Dispersion/sample_std_dev_alpha_17.pdf', height = 6, width = 8)
+pdf('C:/Users/JulianW/Documents/Work/Productivity Dispersion/sim_graphs/sample_std_dev_alpha_17.pdf', height = 6, width = 8)
 par(mfcol = c(1,1))
 
 plot(range(sd_sum_srt$variable), 
@@ -97,3 +97,5 @@ legend('topleft',
        lty = c(1, 2), lwd = 2)
 
 dev.off()
+
+
