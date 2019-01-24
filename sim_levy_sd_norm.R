@@ -12,11 +12,14 @@ p <- 10^8
 n <- 10^5 # sample size
 runs <- 1000 # iterations
 
+# generate 'population' of random variables
 pop <- as.list(rstable(p, alpha, beta, gamma, delta, pm = 0))
 pop_sd <- sd(unlist(pop))
 pop_n <- as.list(rnorm(p, mean = 0, sd = pop_sd))
 pop_n_sd <- sd(unlist(pop_n))
 
+
+# sampling simulation
 samsd <- list()
 samsd_n <- list()
 
@@ -27,10 +30,11 @@ for(i in 1:runs){
 
 iterations <- list(1:runs)
 
-pdf('C:/Users/JulianW/Documents/Work/Productivity Dispersion/sim_graphs/comp_norm_levy_sd.pdf', height = 12, width = 8)
-par(mfcol = c(2,1))
+# Generate plot
+pdf('C:/Users/JulianW/Documents/Work/Productivity Dispersion/sim_graphs/comp_norm_levy_sd.pdf', height = 12, width = 8) # makes a PDF in selected folder
+par(mfcol = c(2,1)) # two graphs, one per row
 
-plot(unlist(iterations), 
+plot(unlist(iterations), # empty plot with axis titles
      log10(unlist(samsd)), 
      xlab = 'Iteration', 
      ylab = 'Sample Standard Deviation',
@@ -39,7 +43,7 @@ plot(unlist(iterations),
      pch = 20,
      cex.axis = 1.3,
      cex.lab = 1.3)
-aty <- axTicks(2)
+aty <- axTicks(2) # make custom scale
 labels <- sapply(aty,function(i)
   as.expression(bquote(10^ .(i)))
 )
@@ -48,7 +52,7 @@ axis(2,
      labels = labels,
      cex.axis = 1.3)
 title('Levy Stable')
-abline(h = log10(pop_sd),
+abline(h = log10(pop_sd), # this is the actual population SD
        lwd = 2,
        col = 'red')
 
