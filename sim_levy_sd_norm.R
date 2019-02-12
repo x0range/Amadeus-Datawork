@@ -1,4 +1,6 @@
-# This file simulates the volatility of sample standard deviations
+### This file simulates the volatility of sample standard deviations when data follows a Stable process
+
+
 rm(list = ls()) # clear environment
 gc() # garbage collection
 
@@ -28,46 +30,61 @@ for(i in 1:runs){
   samsd_n[i] <- sd(unlist(sample(pop_n, n)))
 }
 
+samsd_hist <- hist(as.numeric(samsd), breaks = 50, plot = FALSE)
+samsd_n_hist <- hist(as.numeric(samsd_n), breaks = 50, plot = FALSE)
+
 iterations <- list(1:runs)
 
 # Generate plot
-pdf('C:/Users/JulianW/Documents/Work/Productivity Dispersion/sim_graphs/comp_norm_levy_sd.pdf', height = 12, width = 8) # makes a PDF in selected folder
-par(mfcol = c(2,1)) # two graphs, one per row
+pdf('C:/Users/JulianW/Documents/Work/Productivity Dispersion/sim_graphs/comp_norm_levy_sd.pdf', height = 6, width = 16) # makes a PDF in selected folder
+par(mfcol = c(1,2)) # two graphs, one per row
 
-plot(unlist(iterations), # empty plot with axis titles
-     log10(unlist(samsd)), 
-     xlab = 'Iteration', 
-     ylab = 'Sample Standard Deviation',
-     yaxt = 'n',
+plot(range(samsd_hist$mids), # empty plot with axis titles
+     range(samsd_hist$counts/runs), 
+     xlab = 'Sample Standard Deviation', 
+     ylab = 'Density',
      cex = 0.6,
      pch = 20,
      cex.axis = 1.3,
-     cex.lab = 1.3)
-aty <- axTicks(2) # make custom scale
-labels <- sapply(aty,function(i)
-  as.expression(bquote(10^ .(i)))
-)
-axis(2,
-     at = aty,
-     labels = labels,
-     cex.axis = 1.3)
+     cex.lab = 1.3,
+     type = 'n')
+points(samsd_hist$mids,
+       samsd_hist$counts/runs,
+      lty = 1, 
+      pch = 20,
+      col = 'black')
+# aty <- axTicks(2) # make custom scale
+# labels <- sapply(aty,function(i)
+#   as.expression(bquote(10^ .(i)))
+# )
+# axis(2,
+#      at = aty,
+#      labels = labels,
+#      cex.axis = 1.3)
 title('Levy Stable')
-abline(h = log10(pop_sd), # this is the actual population SD
+abline(v = pop_sd, # this is the actual population SD
        lwd = 2,
+       lty = 2,
        col = 'red')
 
-plot(unlist(iterations), 
-     (unlist(samsd_n)), 
-     xlab = 'Iteration', 
-     ylab = 'Sample Standard Deviation',
+plot(range(samsd_n_hist$mids), # empty plot with axis titles
+     range(samsd_n_hist$counts/n), 
+     xlab = 'Sample Standard Deviation', 
+     ylab = 'Density',
      cex = 0.6,
      pch = 20,
      cex.axis = 1.3,
-     cex.lab = 1.3)
+     cex.lab = 1.3,
+     type = 'n')
+points(samsd_n_hist$mids,
+       samsd_n_hist$counts/n,
+       lty = 1, 
+       pch = 20,
+       col = 'black')
 title('Standard Normal')
-
-abline(h = (pop_n_sd),
+abline(v = pop_n_sd,
        lwd = 2,
-       col = 'red')
+       col = 'red',
+       lty = 2)
 
 dev.off()
