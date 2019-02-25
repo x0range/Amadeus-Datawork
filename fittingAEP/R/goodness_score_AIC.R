@@ -10,7 +10,7 @@ AEP_AIC <- function(fit_AEP, obs_mid) {
   # Returns:
   #     AIC of the AEP fit
 
-  aep_aic <- 2*4 - sum(log(pdfaep4(obs_mid, fit_AEP)))
+  aep_aic <- 2*4 - 2 * sum(log(pdfaep4(obs_mid, fit_AEP)))
 
   return(aep_aic)
 }

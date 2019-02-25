@@ -10,7 +10,7 @@ levy_AIC <- function(para_levy, observations) {
   # Returns:
   #     AIC of the Levy fit
     
-  levy_aic <- 2*4 - sum(dstable(observations, para_levy[1], para_levy[2], para_levy[3], para_levy[4], log = T))
+  levy_aic <- 2*4 - 2 * sum(dstable(observations, para_levy[1], para_levy[2], para_levy[3], para_levy[4], log = T))
 
   return(levy_aic)
 }
