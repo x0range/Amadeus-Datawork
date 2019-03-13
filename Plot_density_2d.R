@@ -4,27 +4,11 @@
 if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
 pacman::p_load(dplyr,ggplot2,ggExtra)
 
-# function definitions
+# load local packages
+# data loading package
+devtools::load_all("loaddata")
 
-# TODO: this function should be in a separate file
-load_data <- function(filename="All_list_Cleaned.Rda", return_variables) {
-  # Function to load and return specified data from a specified file. The function loads the specified file and asserts 
-  #     that the requested objects are present.
-  # Arguments:
-  #     filename: string                    - name of data file
-  #     return_variables: list of string    - names of requested return variables
-  # Returns:
-  #     list of objects. The objects are the loaded data structures, their names are preserved and match the requested names 
-  loaded <- load(filename)
-  for (var in return_variables) {
-    if (!(hasName(mget(loaded), var))) {
-      print(paste("Requested object", var, "not present in loaded file", filename))
-      print("Giving up.")
-      quit(status=1)
-    }
-  }
-  return(mget(loaded))
-}
+# function definitions
 
 plot_2ddensity <- function(data_frames, country_names, var_name1="LP", var_name2="LP_g", cutoff_quantile=0.005) {
   # Function to plot 2d densities by country. Will take list of data frames and list of conutry names to produce a series of 2d 
@@ -64,5 +48,5 @@ plot_2ddensity <- function(data_frames, country_names, var_name1="LP", var_name2
 
 
 # main entry point
-data <- load_data(filename="All_list_Cleaned.Rda", return_variables=c("All_list_Cleaned", "country_names"))
+data <- loaddata(filename="All_list_Cleaned.Rda", return_variables=c("All_list_Cleaned", "country_names"))
 plot_2ddensity(data$All_list_Cleaned, data$country_names)
