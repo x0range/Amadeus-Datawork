@@ -98,6 +98,8 @@ fun_data_clean <- function(dat){
     
     group_by(IDNR) %>% # group by firm index
     
+    # growth variables
+    
     # firm size growth
     mutate(EMPL_g = (as.numeric(EMPL) - 
                        lag(as.numeric(EMPL),1))/lag(as.numeric(EMPL),1),    # wrt employment 
@@ -141,7 +143,69 @@ fun_data_clean <- function(dat){
     # etc
     
     mutate(PW_g = (PW - lag(PW,1))/lag(PW,1)) %>% #
-    mutate(PW_AD_g = (PW_AD - lag(PW_AD,1))/lag(PW_AD,1)) #
+    mutate(PW_AD_g = (PW_AD - lag(PW_AD,1))/lag(PW_AD,1)) %>% #
+    
+
+    # log return variables
+    
+    # firm size
+    mutate(EMPL_lr = log(as.numeric(EMPL)/lag(as.numeric(EMPL),1)),    # wrt employment 
+           FIAS_lr = log(as.numeric(FIAS)/lag(as.numeric(FIAS),1)),    # wrt fixed assets
+           TOAS_lr = log(as.numeric(TOAS)/lag(as.numeric(TOAS),1)),    # wrt total assets
+           SALE_lr = log(as.numeric(TURN)/lag(as.numeric(TURN),1)),    # wrt sales
+           
+           # And the same variables again defalated
+           
+           def_FIAS_lr = log(as.numeric(def_FIAS)/lag(as.numeric(def_FIAS),1)),   # wrt fixed assets
+           def_TOAS_lr = log(as.numeric(def_TOAS)/lag(as.numeric(def_TOAS),1)),   # wrt total assets
+           def_SALE_lr = log(as.numeric(def_TURN)/lag(as.numeric(def_TURN),1))    # wrt sales
+           ) %>% 
+    
+    # productivity growth
+    
+    mutate(CP_lr = log(CP/lag(CP,1)),
+           CP_AD_lr = log(CP_AD/lag(CP_AD,1)),                   # capital productivity undeflated
+           LP_lr = log(LP/lag(LP,1)),
+           LP_AD_lr = log(LP_AD/lag(LP_AD,1)),                   # labor productivity undeflated
+           
+           def_CP_lr = log(def_CP/lag(def_CP,1)),
+           def_CP_AD_lr = log(def_CP_AD/lag(def_CP_AD,1)),       # capital productivity deflated
+           def_LP_lr = log(def_LP/lag(def_LP,1)),
+           def_LP_AD_lr = log(def_LP_AD/lag(def_LP_AD,1)),       # labor productivity deflated
+           
+           # TODO: Check - is this computation of Zeta log returns correct??
+           #Zeta_lr = log((CP/lag(CP,1)) * (1-WS) + (LP/lag(LP,1)) * WS),
+           #Zeta_AD_lr = log((CP_AD/lag(CP_AD,1)) * (1-WS_AD) + (LP_AD/lag(LP_AD,1)) * WS_AD),                       # TFP undeflated
+           #lpdef_Zeta_lr = log((CP/lag(CP,1)) * (1-WS) + (def_LP/lag(def_LP,1)) * WS),
+           #lpdef_Zeta_AD_lr = log((CP_AD/lag(CP_AD,1)) * (1-WS_AD) + (def_LP_AD/lag(def_LP_AD,1)) * WS_AD),         # TFP with only capital productivity deflated (labor productivity undeflated)
+           #def_Zeta_lr = log((def_CP/lag(def_CP,1)) * (1-WS) + (def_LP/lag(def_LP,1)) * WS),
+           #def_Zeta_AD_lr = log((def_CP_AD/lag(def_CP_AD,1)) * (1-WS_AD) + (def_LP_AD/lag(def_LP_AD,1)) * WS_AD)    # TFP deflated (both capital and labor productivity)
+           ) %>% # G_CP
+    
+    # etc
+    
+    mutate(PW_lr = log(PW/lag(PW,1)) %>% #
+    mutate(PW_AD_lr = log(PW_AD/lag(PW_AD,1)) %>% #
+    
+    # first difference variables
+    mutate(CP_diff = CP - lag(CP,1),
+           CP_AD_diff = CP_AD - lag(CP_AD,1),                   # capital productivity undeflated
+           LP_diff = LP - lag(LP,1),
+           LP_AD_diff = LP_AD - lag(LP_AD,1),                   # labor productivity undeflated
+           
+           def_CP_diff = def_CP - lag(def_CP,1),
+           def_CP_AD_diff = def_CP_AD - lag(def_CP_AD,1),       # capital productivity deflated
+           def_LP_diff = def_LP - lag(def_LP,1),
+           def_LP_AD_diff = def_LP_AD - lag(def_LP_AD,1)#,       # labor productivity deflated
+           
+           # TODO: What would differences in Zeta be like?
+           #Zeta_diff = CP_g * (1-WS) + LP_g * WS,
+           #Zeta_AD_diff = CP_AD_g * (1-WS_AD) + LP_AD_g * WS_AD,                 # TFP undeflated
+           #lpdef_Zeta_diff = CP_g * (1-WS) + def_LP_g * WS,
+           #lpdef_Zeta_AD_diff = CP_AD_g * (1-WS_AD) + def_LP_AD_g * WS_AD,       # TFP with only capital productivity deflated (labor productivity undeflated)
+           #def_Zeta_diff = def_CP_g * (1-WS) + def_LP_g * WS,
+           #def_Zeta_AD_diff = def_CP_AD_g * (1-WS_AD) + def_LP_AD_g * WS_AD      # TFP deflated (both capital and labor productivity)
+           ) 
     
   return(data_c)
 }
@@ -243,32 +307,38 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
   Cleaned_dat_Productivity <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year,  LP =  LP,  CP =  CP,  LP_AD = LP_AD, 
     CP_AD = CP_AD, CP_g = CP_g, CP_AD_g = CP_AD_g, LP_g = LP_g, 
-    LP_AD_g = LP_AD_g, Zeta = Zeta, Zeta_AD = Zeta_AD
+    LP_AD_g = LP_AD_g, Zeta = Zeta, Zeta_AD = Zeta_AD,
+    CP_lr = CP_lr, CP_AD_lr = CP_AD_lr, LP_lr = LP_lr, 
+    LP_AD_lr = LP_AD_lr, CP_diff = CP_diff, CP_AD_diff = CP_AD_diff, LP_diff = LP_diff, 
+    LP_AD_diff = LP_AD_diff
     )
   
   Cleaned_dat_Productivity_Deflated <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year, LP = def_LP, CP =  def_CP, LP_AD = def_LP_AD, 
     CP_AD = def_CP_AD, CP_g = def_CP_g, CP_AD_g = def_CP_AD_g, LP_g = def_LP_g, 
     LP_AD_g = def_LP_AD_g, Zeta = def_Zeta, Zeta_AD = def_Zeta_AD, lpdef_Zeta = lpdef_Zeta, 
-    lpdef_Zeta_AD = lpdef_Zeta_AD
+    lpdef_Zeta_AD = lpdef_Zeta_AD, CP_lr = def_CP_lr, CP_AD_lr = def_CP_AD_lr, LP_lr = def_LP_lr, 
+    LP_AD_lr = def_LP_AD_lr, CP_diff = def_CP_diff, CP_AD_diff = def_CP_AD_diff, LP_diff = def_LP_diff, 
+    LP_AD_diff = def_LP_AD_diff,
     )
-  #browser()
   
   Cleaned_dat_Cost_Structure <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year,  WS = WS, WS_AD = WS_AD, PW = PW, 
-    PW_AD = PW_AD,  PW_g = PW_g,  PW_AD_g = PW_AD_g
+    PW_AD = PW_AD,  PW_g = PW_g,  PW_AD_g = PW_AD_g,  PW_lr = PW_lr,  PW_AD_lr = PW_AD_lr
     )
 
   Cleaned_dat_Firm_Size <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year, SALE = TURN, EMPL =  EMPL, 
     TOAS = TOAS, FIAS = FIAS, VA = VA, EMPL_g = EMPL_g, FIAS_g = FIAS_g, TOAS_g = TOAS_g, 
-    SALE_g = SALE_g
+    SALE_g = SALE_g, EMPL_lr = EMPL_lr, FIAS_lr = FIAS_lr, TOAS_lr = TOAS_lr, 
+    SALE_lr = SALE_lr
   )
 
   Cleaned_dat_Firm_Size_Deflated <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year, SALE = def_TURN, EMPL = EMPL, 
     TOAS = def_TOAS, FIAS = def_FIAS, VA = def_VA, EMPL_g = EMPL_g, FIAS_g = def_FIAS_g, 
-    TOAS_g = def_TOAS_g, SALE_g = def_SALE_g
+    TOAS_g = def_TOAS_g, SALE_g = def_SALE_g, EMPL_lr = EMPL_lr, FIAS_lr = def_FIAS_lr, 
+    TOAS_lr = def_TOAS_lr, SALE_lr = def_SALE_lr
   )
    
   # 7. save panels
@@ -300,7 +370,18 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
     file=paste("panels_J!&", paste(unlist(country_name), collapse=""), ".Rda", sep="")  # either panels_ or consolidated_panels
   )
   
+  # TODO: Do we want these or do we not want the deflated Variables?
+  return_df <- list(NUTS_3=NUTS_3, NACE_PRIM_CODE=NACE_PRIM_CODE, COMPCAT=COMPCAT, QUOTED=QUOTED,       
+        NAME=NAME, IDNR=IDNR, Year=Year, Firm_Age=Firm_Age, SALE=def_SALE, EMPL=EMPL, TOAS=def_TOAS, FIAS=def_FIAS, VA=def_VA,        
+        EMPL_g=EMPL_g, FIAS_g=def_FIAS_g, TOAS_g=def_TOAS_g, SALE_g=def_SALE_g, LP=def_LP, CP=def_CP, LP_AD=def_LP_AD, CP_AD=def_CP_AD, 
+        CP_g=def_CP_g, CP_AD_g=def_CP_AD_g, LP_g=def_LP_g, LP_AD_g=def_LP_AD_g, Zeta=def_Zeta, Zeta_AD=def_Zeta_AD, lpdef_Zeta=lpdef_Zeta, 
+        lpdef_Zeta_AD=lpdef_Zeta_AD, RoC_G=def_RoC_G, RoC_G_FI=def_RoC_G_FI, RoC_G_AD=def_RoC_G_AD, RoC_G_AD_FI=def_RoC_G_AD_FI,  
+        RoC_N=def_RoC_N, RoC_RCEM=def_RoC_RCEM, RoC_RTAS=def_RoC_RTAS, WS=WS, WS_AD=WS_AD, NACE_DES=NACE_DES, NACE_CAT=NACE_CAT,
+        LP_lr=def_LP_lr, CP_lr=def_CP_lr, LP_AD_lr=def_LP_AD_lr, CP_AD_lr=def_CP_AD_lr, LP_diff=def_LP_diff, LP_AD_diff=def_LP_AD_diff,
+        CP_diff=def_CP_diff, CP_AD_diff=def_CP_AD_diff)
+
   detach(country_results)
+  return(return_df)
 }
 
 
@@ -357,12 +438,14 @@ filenames_nuts <- c('NUTS/pc2016_al_NUTS-2013_v2.3.csv','NUTS/pc2016_at_NUTS-201
 
 print("Commence reading and cleaning data...")
 
+All_list_Cleaned <- list()
 for (i in 1:length(filenames)) {
   #tryCatch({
-  fun_read_by_country(filenames[[i]], country_names[[i]], country_abbrv[[i]], filenames_nuts[[i]])      
+  All_list_Cleaned[[i]] <- fun_read_by_country(filenames[[i]], country_names[[i]], country_abbrv[[i]], filenames_nuts[[i]])      
   #}, error=function(e){})
   # function saves directly, so no need to save the return value
 }
+save(All_list_Cleaned, country_names, file="All_list_Cleaned.Rda")
 
 print("All complete")
 
