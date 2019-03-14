@@ -195,8 +195,8 @@ fun_data_clean <- function(dat){
     
     # etc
     
-    mutate(PW_lr = log(PW/lag(PW,1)) %>% #
-    mutate(PW_AD_lr = log(PW_AD/lag(PW_AD,1)) %>% #
+    mutate(PW_lr = log(PW/lag(PW,1))) %>% #
+    mutate(PW_AD_lr = log(PW_AD/lag(PW_AD,1))) %>% #
     
     # first difference variables
     mutate(CP_diff = CP - lag(CP,1),
@@ -207,7 +207,7 @@ fun_data_clean <- function(dat){
            def_CP_diff = def_CP - lag(def_CP,1),
            def_CP_AD_diff = def_CP_AD - lag(def_CP_AD,1),       # capital productivity deflated
            def_LP_diff = def_LP - lag(def_LP,1),
-           def_LP_AD_diff = def_LP_AD - lag(def_LP_AD,1)#,      # labor productivity deflated
+           def_LP_AD_diff = def_LP_AD - lag(def_LP_AD,1),       # labor productivity deflated
            
            TFP_diff = TFP - lag(TFP, 1),
            TFP_AD_diff = TFP_AD - lag(TFP_AD, 1),               # TFP undeflated
