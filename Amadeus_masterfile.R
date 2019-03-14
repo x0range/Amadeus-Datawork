@@ -268,6 +268,7 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
   all_p_ind$nace2 <- as.numeric(all_p_ind$nace2)            # change NACE code to numeric to match firm data file structure
   all_p_ind<-transform(all_p_ind, p_ind_va=p_ind_va/100., p_ind_go=p_ind_go/100., p_ind_cp=p_ind_cp/100.)
   colnames(all_p_ind) <- c("NACE_PRIM_CODE", "CLOSDATE_year", "p_ind_va", "p_ind_go", "p_ind_cp")   # replace colnames to match firm data file structure
+  all_p_ind <- all_p_ind[!is.na(all_p_ind$NACE_PRIM_CODE),]                                         # remove NA NACE codes to prevent incorrect merge results
   cdata <- merge(cdata, all_p_ind, by=c("NACE_PRIM_CODE", "CLOSDATE_year"), all.x=TRUE)             # merge deflators into firm data frame (data.table, actually)
   
   # 4. compute firm age from CLOSDATE_year and DATEINC_char
