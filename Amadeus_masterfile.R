@@ -382,18 +382,7 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
     file=paste("panels_J!&", paste(unlist(country_name), collapse=""), ".Rda", sep="")  # either panels_ or consolidated_panels
   )
   
-  # TODO: Do we want these or do we not want the deflated Variables?
-  return_df <- list(NUTS_3=NUTS_3, NACE_PRIM_CODE=NACE_PRIM_CODE, COMPCAT=COMPCAT, QUOTED=QUOTED,       
-        NAME=NAME, IDNR=IDNR, Year=Year, Firm_Age=Firm_Age, SALE=def_SALE, EMPL=EMPL, TOAS=def_TOAS, FIAS=def_FIAS, VA=def_VA,        
-        EMPL_g=EMPL_g, FIAS_g=def_FIAS_g, TOAS_g=def_TOAS_g, SALE_g=def_SALE_g, LP=def_LP, CP=def_CP, LP_AD=def_LP_AD, CP_AD=def_CP_AD, 
-        CP_g=def_CP_g, CP_AD_g=def_CP_AD_g, LP_g=def_LP_g, LP_AD_g=def_LP_AD_g, Zeta=def_Zeta, Zeta_AD=def_Zeta_AD, lpdef_Zeta=lpdef_Zeta, 
-        lpdef_Zeta_AD=lpdef_Zeta_AD, RoC_G=def_RoC_G, RoC_G_FI=def_RoC_G_FI, RoC_G_AD=def_RoC_G_AD, RoC_G_AD_FI=def_RoC_G_AD_FI,  
-        RoC_N=def_RoC_N, RoC_RCEM=def_RoC_RCEM, RoC_RTAS=def_RoC_RTAS, WS=WS, WS_AD=WS_AD, NACE_DES=NACE_DES, NACE_CAT=NACE_CAT,
-        LP_lr=def_LP_lr, CP_lr=def_CP_lr, LP_AD_lr=def_LP_AD_lr, CP_AD_lr=def_CP_AD_lr, LP_diff=def_LP_diff, LP_AD_diff=def_LP_AD_diff,
-        CP_diff=def_CP_diff, CP_AD_diff=def_CP_AD_diff)
-
   detach(country_results)
-  return(return_df)
 }
 
 
@@ -450,14 +439,12 @@ filenames_nuts <- c('NUTS/pc2016_al_NUTS-2013_v2.3.csv','NUTS/pc2016_at_NUTS-201
 
 print("Commence reading and cleaning data...")
 
-All_list_Cleaned <- list()
 for (i in 1:length(filenames)) {
   #tryCatch({
-  All_list_Cleaned[[i]] <- fun_read_by_country(filenames[[i]], country_names[[i]], country_abbrv[[i]], filenames_nuts[[i]])      
+  fun_read_by_country(filenames[[i]], country_names[[i]], country_abbrv[[i]], filenames_nuts[[i]])      
   #}, error=function(e){})
   # function saves directly, so no need to save the return value
 }
-save(All_list_Cleaned, country_names, file="All_list_Cleaned.Rda")
 
 print("All complete")
 
