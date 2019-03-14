@@ -99,9 +99,9 @@ fun_data_clean <- function(dat){
     #   1. not deflated
     #   2. everything deflated (VA, DEPR, FIAS)
     mutate(TFP = as.numeric(VA) / ((as.numeric(FIAS)+as.numeric(DEPR))**(1-WS) * as.numeric(EMPL)**WS),
-           TFP_AD = as.numeric(VA) / ((as.numeric(FIAS))**(1-WS_AD) * as.numeric(EMPL)**WS_AD),         # TFP undeflated
+           TFP_AD = as.numeric(VA_AD) / ((as.numeric(FIAS))**(1-WS_AD) * as.numeric(EMPL)**WS_AD),         # TFP undeflated
            def_TFP = as.numeric(def_VA) / ((as.numeric(def_FIAS)+as.numeric(def_DEPR))**(1-WS) * as.numeric(EMPL)**WS),
-           def_TFP_AD = as.numeric(def_VA) / ((as.numeric(def_FIAS))**(1-WS_AD) * as.numeric(EMPL)**WS_AD)      # TFP deflated (both capital and labor productivity)
+           def_TFP_AD = as.numeric(def_VA_AD) / ((as.numeric(def_FIAS))**(1-WS_AD) * as.numeric(EMPL)**WS_AD)      # TFP deflated (both capital and labor productivity)
            ) %>% # G_CP
     
     # Zombie firm indicator (True if labor productivity was negative in the previous period)
