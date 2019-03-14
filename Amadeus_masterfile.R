@@ -97,6 +97,22 @@ fun_data_clean <- function(dat){
   
     
     group_by(IDNR) %>% # group by firm index
+
+    # Compute TFP from accounting identity TFP = Y / ((K)**(1-WS) * L**(WS)) in two ways:
+    #   1. not deflated
+    #   2. everything deflated (VA, DEPR, FIAS)
+    mutate(TFP = as.numeric(VA) / ((as.numeric(FIAS)+as.numeric(DEPR))**(1-WS) * as.numeric(EMPL)**WS),
+           TFP_AD = as.numeric(VA) / ((as.numeric(FIAS))**(1-WS_AD) * as.numeric(EMPL)**WS_AD),         # TFP undeflated
+           def_TFP = as.numeric(def_VA) / ((as.numeric(def_FIAS)+as.numeric(def_DEPR))**(1-WS) * as.numeric(EMPL)**WS),
+           def_TFP_AD = as.numeric(def_VA) / ((as.numeric(def_FIAS))**(1-WS_AD) * as.numeric(EMPL)**WS_AD)      # TFP deflated (both capital and labor productivity)
+           ) %>% # G_CP
+    
+    # Zombie firm indicator (True if labor productivity was negative in the previous period)
+    mutate(ZOMBIE = lag(LP, 1) < 0,
+           ZOMBIE_AD = lag(LP_AD, 1) < 0,
+           def_ZOMBIE = lag(def_LP, 1) < 0,
+           def_ZOMBIE_AD = lag(def_LP_AD, 1) < 0
+           ) %>% 
     
     # growth variables
     
@@ -132,12 +148,10 @@ fun_data_clean <- function(dat){
            def_LP_g = (def_LP - lag(def_LP,1))/lag(def_LP,1),
            def_LP_AD_g = (def_LP_AD - lag(def_LP_AD,1))/lag(def_LP_AD,1),   # labor productivity deflated
            
-           Zeta = CP_g * (1-WS) + LP_g * WS,
-           Zeta_AD = CP_AD_g * (1-WS_AD) + LP_AD_g * WS_AD,                 # TFP undeflated
-           lpdef_Zeta = CP_g * (1-WS) + def_LP_g * WS,
-           lpdef_Zeta_AD = CP_AD_g * (1-WS_AD) + def_LP_AD_g * WS_AD,       # TFP with only capital productivity deflated (labor productivity undeflated)
-           def_Zeta = def_CP_g * (1-WS) + def_LP_g * WS,
-           def_Zeta_AD = def_CP_AD_g * (1-WS_AD) + def_LP_AD_g * WS_AD      # TFP deflated (both capital and labor productivity)
+           TFP_g = (TFP - lag(TFP,1))/lag(TFP,1),
+           TFP_AD_g = (TFP_AD - lag(TFP_AD,1))/lag(TFP_AD,1),               # TFP undeflated
+           def_TFP_g = (def_TFP - lag(def_TFP,1))/lag(def_TFP,1),
+           def_TFP_AD_g = (def_TFP_AD - lag(def_TFP_AD,1))/lag(def_TFP_AD,1)  # TFP deflated
            ) %>% # G_CP
     
     # etc
@@ -173,13 +187,10 @@ fun_data_clean <- function(dat){
            def_LP_lr = log(def_LP/lag(def_LP,1)),
            def_LP_AD_lr = log(def_LP_AD/lag(def_LP_AD,1)),       # labor productivity deflated
            
-           # TODO: Check - is this computation of Zeta log returns correct??
-           #Zeta_lr = log((CP/lag(CP,1)) * (1-WS) + (LP/lag(LP,1)) * WS),
-           #Zeta_AD_lr = log((CP_AD/lag(CP_AD,1)) * (1-WS_AD) + (LP_AD/lag(LP_AD,1)) * WS_AD),                       # TFP undeflated
-           #lpdef_Zeta_lr = log((CP/lag(CP,1)) * (1-WS) + (def_LP/lag(def_LP,1)) * WS),
-           #lpdef_Zeta_AD_lr = log((CP_AD/lag(CP_AD,1)) * (1-WS_AD) + (def_LP_AD/lag(def_LP_AD,1)) * WS_AD),         # TFP with only capital productivity deflated (labor productivity undeflated)
-           #def_Zeta_lr = log((def_CP/lag(def_CP,1)) * (1-WS) + (def_LP/lag(def_LP,1)) * WS),
-           #def_Zeta_AD_lr = log((def_CP_AD/lag(def_CP_AD,1)) * (1-WS_AD) + (def_LP_AD/lag(def_LP_AD,1)) * WS_AD)    # TFP deflated (both capital and labor productivity)
+           TFP_lr = log(TFP/lag(TFP,1)),
+           TFP_AD_lr = log(TFP_AD/lag(TFP_AD,1)),               # TFP undeflated
+           def_TFP_lr = log(def_TFP/lag(def_TFP,1)),
+           def_TFP_AD_lr = log(def_TFP_AD/lag(def_TFP_AD,1))    # TFP deflated 
            ) %>% # G_CP
     
     # etc
@@ -196,15 +207,12 @@ fun_data_clean <- function(dat){
            def_CP_diff = def_CP - lag(def_CP,1),
            def_CP_AD_diff = def_CP_AD - lag(def_CP_AD,1),       # capital productivity deflated
            def_LP_diff = def_LP - lag(def_LP,1),
-           def_LP_AD_diff = def_LP_AD - lag(def_LP_AD,1)#,       # labor productivity deflated
+           def_LP_AD_diff = def_LP_AD - lag(def_LP_AD,1)#,      # labor productivity deflated
            
-           # TODO: What would differences in Zeta be like?
-           #Zeta_diff = CP_g * (1-WS) + LP_g * WS,
-           #Zeta_AD_diff = CP_AD_g * (1-WS_AD) + LP_AD_g * WS_AD,                 # TFP undeflated
-           #lpdef_Zeta_diff = CP_g * (1-WS) + def_LP_g * WS,
-           #lpdef_Zeta_AD_diff = CP_AD_g * (1-WS_AD) + def_LP_AD_g * WS_AD,       # TFP with only capital productivity deflated (labor productivity undeflated)
-           #def_Zeta_diff = def_CP_g * (1-WS) + def_LP_g * WS,
-           #def_Zeta_AD_diff = def_CP_AD_g * (1-WS_AD) + def_LP_AD_g * WS_AD      # TFP deflated (both capital and labor productivity)
+           TFP_diff = TFP - lag(TFP, 1),
+           TFP_AD_diff = TFP_AD - lag(TFP_AD, 1),               # TFP undeflated
+           def_TFP_diff = def_TFP - lag(def_TFP, 1),
+           def_TFP_AD_diff = def_TFP_AD - lag(def_TFP_AD, 1)    # TFP deflated 
            ) 
     
   return(data_c)
@@ -307,19 +315,23 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
   Cleaned_dat_Productivity <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year,  LP =  LP,  CP =  CP,  LP_AD = LP_AD, 
     CP_AD = CP_AD, CP_g = CP_g, CP_AD_g = CP_AD_g, LP_g = LP_g, 
-    LP_AD_g = LP_AD_g, Zeta = Zeta, Zeta_AD = Zeta_AD,
+    LP_AD_g = LP_AD_g, TFP = TFP_g, TFP_AD_g = TFP_AD_g, 
+    TFP = TFP, TFP_AD = TFP_AD, ZOMBIE = ZOMBIE, ZOMBIE_AD = ZOMBIE_AD, 
     CP_lr = CP_lr, CP_AD_lr = CP_AD_lr, LP_lr = LP_lr, 
-    LP_AD_lr = LP_AD_lr, CP_diff = CP_diff, CP_AD_diff = CP_AD_diff, LP_diff = LP_diff, 
-    LP_AD_diff = LP_AD_diff
+    LP_AD_lr = LP_AD_lr, TFP_lr = TFP_lr, TFP_AD_lr = TFP_AD_lr, 
+    CP_diff = CP_diff, CP_AD_diff = CP_AD_diff, LP_diff = LP_diff, 
+    LP_AD_diff = LP_AD_diff, TFP_diff = TFP_diff, TFP_AD_diff = TFP_AD_diff
     )
   
   Cleaned_dat_Productivity_Deflated <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year, LP = def_LP, CP =  def_CP, LP_AD = def_LP_AD, 
     CP_AD = def_CP_AD, CP_g = def_CP_g, CP_AD_g = def_CP_AD_g, LP_g = def_LP_g, 
-    LP_AD_g = def_LP_AD_g, Zeta = def_Zeta, Zeta_AD = def_Zeta_AD, lpdef_Zeta = lpdef_Zeta, 
-    lpdef_Zeta_AD = lpdef_Zeta_AD, CP_lr = def_CP_lr, CP_AD_lr = def_CP_AD_lr, LP_lr = def_LP_lr, 
-    LP_AD_lr = def_LP_AD_lr, CP_diff = def_CP_diff, CP_AD_diff = def_CP_AD_diff, LP_diff = def_LP_diff, 
-    LP_AD_diff = def_LP_AD_diff,
+    LP_AD_g = def_LP_AD_g, TFP_g = def_TFP_g, TFP_AD_g = def_TFP_AD_g, 
+    TFP = def_TFP, TFP_AD = def_TFP_AD, ZOMBIE = def_ZOMBIE, ZOMBIE_AD = def_ZOMBIE_AD, 
+    CP_lr = def_CP_lr, CP_AD_lr = def_CP_AD_lr, LP_lr = def_LP_lr, 
+    LP_AD_lr = def_LP_AD_lr, TFP_lr = def_TFP_lr, TFP_AD_lr = def_TFP_AD_lr, 
+    CP_diff = def_CP_diff, CP_AD_diff = def_CP_AD_diff, LP_diff = def_LP_diff, 
+    LP_AD_diff = def_LP_AD_diff, TFP_diff = def_TFP_diff, TFP_AD_diff = def_TFP_AD_diff
     )
   
   Cleaned_dat_Cost_Structure <- data.frame(
