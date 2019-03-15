@@ -7,6 +7,7 @@ pacman::p_load(dplyr,StableEstim,lmomco,devtools)
 
 ## 0.2 loading local packages
 # functions from cross.validation package
+setwd("../")
 devtools::load_all("crossvalidation")
 
 ## 0.3. Setting of basic functions
