@@ -1,11 +1,8 @@
 ## ------------------------------------------------------------------------
 
 # Load libraries
-
-library(data.table)
-library(plyr)
-library(dplyr)
-
+if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
+pacman::p_load(dplyr,plyr,data.table,bit64)
 
 
 # Functions
@@ -97,6 +94,24 @@ fun_data_clean <- function(dat){
   
     
     group_by(IDNR) %>% # group by firm index
+
+    # Compute TFP from accounting identity TFP = Y / ((K)**(1-WS) * L**(WS)) in two ways:
+    #   1. not deflated
+    #   2. everything deflated (VA, DEPR, FIAS)
+    mutate(TFP = as.numeric(VA) / ((as.numeric(FIAS)+as.numeric(DEPR))**(1-WS) * as.numeric(EMPL)**WS),
+           TFP_AD = as.numeric(VA_AD) / ((as.numeric(FIAS))**(1-WS_AD) * as.numeric(EMPL)**WS_AD),         # TFP undeflated
+           def_TFP = as.numeric(def_VA) / ((as.numeric(def_FIAS)+as.numeric(def_DEPR))**(1-WS) * as.numeric(EMPL)**WS),
+           def_TFP_AD = as.numeric(def_VA_AD) / ((as.numeric(def_FIAS))**(1-WS_AD) * as.numeric(EMPL)**WS_AD)      # TFP deflated (both capital and labor productivity)
+           ) %>% # G_CP
+    
+    # Zombie firm indicator (True if labor productivity was negative in the previous period)
+    mutate(ZOMBIE = lag(LP, 1) < 0,
+           ZOMBIE_AD = lag(LP_AD, 1) < 0,
+           def_ZOMBIE = lag(def_LP, 1) < 0,
+           def_ZOMBIE_AD = lag(def_LP_AD, 1) < 0
+           ) %>% 
+    
+    # growth variables
     
     # firm size growth
     mutate(EMPL_g = (as.numeric(EMPL) - 
@@ -130,18 +145,72 @@ fun_data_clean <- function(dat){
            def_LP_g = (def_LP - lag(def_LP,1))/lag(def_LP,1),
            def_LP_AD_g = (def_LP_AD - lag(def_LP_AD,1))/lag(def_LP_AD,1),   # labor productivity deflated
            
-           Zeta = CP_g * (1-WS) + LP_g * WS,
-           Zeta_AD = CP_AD_g * (1-WS_AD) + LP_AD_g * WS_AD,                 # TFP undeflated
-           lpdef_Zeta = CP_g * (1-WS) + def_LP_g * WS,
-           lpdef_Zeta_AD = CP_AD_g * (1-WS_AD) + def_LP_AD_g * WS_AD,       # TFP with only capital productivity deflated (labor productivity undeflated)
-           def_Zeta = def_CP_g * (1-WS) + def_LP_g * WS,
-           def_Zeta_AD = def_CP_AD_g * (1-WS_AD) + def_LP_AD_g * WS_AD      # TFP deflated (both capital and labor productivity)
+           TFP_g = (TFP - lag(TFP,1))/lag(TFP,1),
+           TFP_AD_g = (TFP_AD - lag(TFP_AD,1))/lag(TFP_AD,1),               # TFP undeflated
+           def_TFP_g = (def_TFP - lag(def_TFP,1))/lag(def_TFP,1),
+           def_TFP_AD_g = (def_TFP_AD - lag(def_TFP_AD,1))/lag(def_TFP_AD,1)  # TFP deflated
            ) %>% # G_CP
     
     # etc
     
     mutate(PW_g = (PW - lag(PW,1))/lag(PW,1)) %>% #
-    mutate(PW_AD_g = (PW_AD - lag(PW_AD,1))/lag(PW_AD,1)) #
+    mutate(PW_AD_g = (PW_AD - lag(PW_AD,1))/lag(PW_AD,1)) %>% #
+    
+
+    # log return variables
+    
+    # firm size
+    mutate(EMPL_lr = log(as.numeric(EMPL)/lag(as.numeric(EMPL),1)),    # wrt employment 
+           FIAS_lr = log(as.numeric(FIAS)/lag(as.numeric(FIAS),1)),    # wrt fixed assets
+           TOAS_lr = log(as.numeric(TOAS)/lag(as.numeric(TOAS),1)),    # wrt total assets
+           SALE_lr = log(as.numeric(TURN)/lag(as.numeric(TURN),1)),    # wrt sales
+           
+           # And the same variables again defalated
+           
+           def_FIAS_lr = log(as.numeric(def_FIAS)/lag(as.numeric(def_FIAS),1)),   # wrt fixed assets
+           def_TOAS_lr = log(as.numeric(def_TOAS)/lag(as.numeric(def_TOAS),1)),   # wrt total assets
+           def_SALE_lr = log(as.numeric(def_TURN)/lag(as.numeric(def_TURN),1))    # wrt sales
+           ) %>% 
+    
+    # productivity growth
+    
+    mutate(CP_lr = log(CP/lag(CP,1)),
+           CP_AD_lr = log(CP_AD/lag(CP_AD,1)),                   # capital productivity undeflated
+           LP_lr = log(LP/lag(LP,1)),
+           LP_AD_lr = log(LP_AD/lag(LP_AD,1)),                   # labor productivity undeflated
+           
+           def_CP_lr = log(def_CP/lag(def_CP,1)),
+           def_CP_AD_lr = log(def_CP_AD/lag(def_CP_AD,1)),       # capital productivity deflated
+           def_LP_lr = log(def_LP/lag(def_LP,1)),
+           def_LP_AD_lr = log(def_LP_AD/lag(def_LP_AD,1)),       # labor productivity deflated
+           
+           TFP_lr = log(TFP/lag(TFP,1)),
+           TFP_AD_lr = log(TFP_AD/lag(TFP_AD,1)),               # TFP undeflated
+           def_TFP_lr = log(def_TFP/lag(def_TFP,1)),
+           def_TFP_AD_lr = log(def_TFP_AD/lag(def_TFP_AD,1))    # TFP deflated 
+           ) %>% # G_CP
+    
+    # etc
+    
+    mutate(PW_lr = log(PW/lag(PW,1))) %>% #
+    mutate(PW_AD_lr = log(PW_AD/lag(PW_AD,1))) %>% #
+    
+    # first difference variables
+    mutate(CP_diff = CP - lag(CP,1),
+           CP_AD_diff = CP_AD - lag(CP_AD,1),                   # capital productivity undeflated
+           LP_diff = LP - lag(LP,1),
+           LP_AD_diff = LP_AD - lag(LP_AD,1),                   # labor productivity undeflated
+           
+           def_CP_diff = def_CP - lag(def_CP,1),
+           def_CP_AD_diff = def_CP_AD - lag(def_CP_AD,1),       # capital productivity deflated
+           def_LP_diff = def_LP - lag(def_LP,1),
+           def_LP_AD_diff = def_LP_AD - lag(def_LP_AD,1),       # labor productivity deflated
+           
+           TFP_diff = TFP - lag(TFP, 1),
+           TFP_AD_diff = TFP_AD - lag(TFP_AD, 1),               # TFP undeflated
+           def_TFP_diff = def_TFP - lag(def_TFP, 1),
+           def_TFP_AD_diff = def_TFP_AD - lag(def_TFP_AD, 1)    # TFP deflated 
+           ) 
     
   return(data_c)
 }
@@ -199,6 +268,7 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
   all_p_ind$nace2 <- as.numeric(all_p_ind$nace2)            # change NACE code to numeric to match firm data file structure
   all_p_ind<-transform(all_p_ind, p_ind_va=p_ind_va/100., p_ind_go=p_ind_go/100., p_ind_cp=p_ind_cp/100.)
   colnames(all_p_ind) <- c("NACE_PRIM_CODE", "CLOSDATE_year", "p_ind_va", "p_ind_go", "p_ind_cp")   # replace colnames to match firm data file structure
+  all_p_ind <- all_p_ind[!is.na(all_p_ind$NACE_PRIM_CODE),]                                         # remove NA NACE codes to prevent incorrect merge results
   cdata <- merge(cdata, all_p_ind, by=c("NACE_PRIM_CODE", "CLOSDATE_year"), all.x=TRUE)             # merge deflators into firm data frame (data.table, actually)
   
   # 4. compute firm age from CLOSDATE_year and DATEINC_char
@@ -243,32 +313,42 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
   Cleaned_dat_Productivity <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year,  LP =  LP,  CP =  CP,  LP_AD = LP_AD, 
     CP_AD = CP_AD, CP_g = CP_g, CP_AD_g = CP_AD_g, LP_g = LP_g, 
-    LP_AD_g = LP_AD_g, Zeta = Zeta, Zeta_AD = Zeta_AD
+    LP_AD_g = LP_AD_g, TFP = TFP_g, TFP_AD_g = TFP_AD_g, 
+    TFP = TFP, TFP_AD = TFP_AD, ZOMBIE = ZOMBIE, ZOMBIE_AD = ZOMBIE_AD, 
+    CP_lr = CP_lr, CP_AD_lr = CP_AD_lr, LP_lr = LP_lr, 
+    LP_AD_lr = LP_AD_lr, TFP_lr = TFP_lr, TFP_AD_lr = TFP_AD_lr, 
+    CP_diff = CP_diff, CP_AD_diff = CP_AD_diff, LP_diff = LP_diff, 
+    LP_AD_diff = LP_AD_diff, TFP_diff = TFP_diff, TFP_AD_diff = TFP_AD_diff
     )
   
   Cleaned_dat_Productivity_Deflated <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year, LP = def_LP, CP =  def_CP, LP_AD = def_LP_AD, 
     CP_AD = def_CP_AD, CP_g = def_CP_g, CP_AD_g = def_CP_AD_g, LP_g = def_LP_g, 
-    LP_AD_g = def_LP_AD_g, Zeta = def_Zeta, Zeta_AD = def_Zeta_AD, lpdef_Zeta = lpdef_Zeta, 
-    lpdef_Zeta_AD = lpdef_Zeta_AD
+    LP_AD_g = def_LP_AD_g, TFP_g = def_TFP_g, TFP_AD_g = def_TFP_AD_g, 
+    TFP = def_TFP, TFP_AD = def_TFP_AD, ZOMBIE = def_ZOMBIE, ZOMBIE_AD = def_ZOMBIE_AD, 
+    CP_lr = def_CP_lr, CP_AD_lr = def_CP_AD_lr, LP_lr = def_LP_lr, 
+    LP_AD_lr = def_LP_AD_lr, TFP_lr = def_TFP_lr, TFP_AD_lr = def_TFP_AD_lr, 
+    CP_diff = def_CP_diff, CP_AD_diff = def_CP_AD_diff, LP_diff = def_LP_diff, 
+    LP_AD_diff = def_LP_AD_diff, TFP_diff = def_TFP_diff, TFP_AD_diff = def_TFP_AD_diff
     )
-  #browser()
   
   Cleaned_dat_Cost_Structure <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year,  WS = WS, WS_AD = WS_AD, PW = PW, 
-    PW_AD = PW_AD,  PW_g = PW_g,  PW_AD_g = PW_AD_g
+    PW_AD = PW_AD,  PW_g = PW_g,  PW_AD_g = PW_AD_g,  PW_lr = PW_lr,  PW_AD_lr = PW_AD_lr
     )
 
   Cleaned_dat_Firm_Size <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year, SALE = TURN, EMPL =  EMPL, 
     TOAS = TOAS, FIAS = FIAS, VA = VA, EMPL_g = EMPL_g, FIAS_g = FIAS_g, TOAS_g = TOAS_g, 
-    SALE_g = SALE_g
+    SALE_g = SALE_g, EMPL_lr = EMPL_lr, FIAS_lr = FIAS_lr, TOAS_lr = TOAS_lr, 
+    SALE_lr = SALE_lr
   )
 
   Cleaned_dat_Firm_Size_Deflated <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year, SALE = def_TURN, EMPL = EMPL, 
     TOAS = def_TOAS, FIAS = def_FIAS, VA = def_VA, EMPL_g = EMPL_g, FIAS_g = def_FIAS_g, 
-    TOAS_g = def_TOAS_g, SALE_g = def_SALE_g
+    TOAS_g = def_TOAS_g, SALE_g = def_SALE_g, EMPL_lr = EMPL_lr, FIAS_lr = def_FIAS_lr, 
+    TOAS_lr = def_TOAS_lr, SALE_lr = def_SALE_lr
   )
    
   # 7. save panels
