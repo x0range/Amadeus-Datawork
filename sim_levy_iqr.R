@@ -70,11 +70,11 @@ dev.off()
 # Consider IQRs from 30% to 1%
 
 a <- 1.7
-IQR_1 <- matrix(, nrow = 201, ncol = 30) # the matrix has beta values as rows, and percentiles as columns
+IQR_1 <- matrix(NA, nrow = 201, ncol = 30) # initiate empty matrix - the matrix has beta values as rows, and percentiles as columns
 
 # assign row and col names, which are reffered to when plotting
 rownames(IQR_1) <- (seq(1:201) - 101)/100
-colnames(IQR_1) <- paste((seq(1:49)), '%', sep = '')
+colnames(IQR_1) <- paste((seq(1:30)), '%', sep = '')
 
 for(j in 1:30){ # run over all IQRs
   print(j)
@@ -89,10 +89,10 @@ for(j in 1:30){ # run over all IQRs
 
 # repeat for alphas 1.5 and 1.2
 a <- 1.5
-IQR_2 <- matrix(, nrow = 201, ncol = 30)
+IQR_2 <- matrix(NA, nrow = 201, ncol = 30)
 
 rownames(IQR_2) <- (seq(1:201) - 101)/100
-colnames(IQR_2) <- paste((seq(1:49)), '%', sep = '')
+colnames(IQR_2) <- paste((seq(1:30)), '%', sep = '')
 
 for(j in 1:30){
   print(j)
@@ -107,10 +107,10 @@ for(j in 1:30){
 }
 
 a <- 1.2
-IQR_3 <- matrix(, nrow = 201, ncol = 30)
+IQR_3 <- matrix(NA, nrow = 201, ncol = 30)
 
 rownames(IQR_3) <- (seq(1:201) - 101)/100
-colnames(IQR_3) <- paste((seq(1:49)), '%', sep = '')
+colnames(IQR_3) <- paste((seq(1:30)), '%', sep = '')
 
 for(j in 1:30){
   print(j)
