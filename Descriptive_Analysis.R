@@ -3,60 +3,19 @@
 #    0. Basic setup
 #    1. Create LaTeX table of numbers of observations
 #    2. Create plots of 1. Firm Size and 2. Industry proportions
-#    3. Create semi-log plots for LP, LP growth, TFP growth by Year, Size, and Industry for sample of five countries
-#    4. Create log-log plots for tails for LP, LP growth, TFP growth by Year, Size, and Industry for sample of five countries
+#    3. Create semi-log plots for LP, LP Change, TFP Change by Year, Size, and Industry for sample of five countries
+#    4. Create log-log plots for tails for LP, LP Change, TFP Change by Year, Size, and Industry for sample of five countries
 
 ############ 0. Basic Set up ############ 
 ## 0.1 loading of required libraries
 if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
 pacman::p_load(RColorBrewer,dplyr,xtable,tidyr)
 
-##  0.2 loading of required data and cleaning
-load("All_list_Cleaned.Rda") ## load the data file created from "Productivity_Analysis_Data.Rmd"
-
-country_names <- c("Albania", "Austria", "Belarus", "Belgium", "Bosnia and Herzegovina", 
-                   "Bulgaria", "Croatia", "Cyprus", "Czech Republic", "Denmark", "Estonia", 
-                   "Finland", "France", "Germany", "Greece", "Hungary", "Iceland", "Ireland",
-                   "Italy", "Kosovo", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", 
-                   "Macedonia, FYR", "Malta", "Monaco", "Montenegro", "Netherlands", "Norway",
-                   "Poland", "Portugal", "Moldova", "Romania", "Russian Federation", "Serbia",
-                   "Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland", "Turkey", "Ukraine", 
-                   "United Kingdom")
-
-# Cleaning
-All_list_Cleaned_cut <- list() 
-for (k in 1:length(All_list_Cleaned)) {
-  print(k)
-  All_list_Cleaned_cut[[k]] <- All_list_Cleaned[[k]] %>%
-    select(IDNR, Year, COMPCAT, NACE_CAT, LP, LP_g, EMPL, VA, Zeta) %>% # Firm ID, Year, Firm Size, Industry ID, Labor Produtivity, Labor Productivity Growth, Employment, Value added, TFP Growth
-    mutate(COMPCAT_one = substr(COMPCAT, 1, 1)) %>% # the first letter of the size variable
-    group_by(Year) %>%
-    filter(length(IDNR) > 10000) %>% # Note that 23 countries out of 44 do not have VA info. Out of 21 countries, 15 countries have enough info for anlaysis (more than 5 years with 10,000 firms )
-    group_by()
-}
-
-# Countries with more than 5 year obs with 10,000 firms
-take_this <- which(unlist(lapply(All_list_Cleaned_cut, function(x) length(unique(x$Year)) > 5))) 
-
-All_list_Cleaned_cut <- All_list_Cleaned_cut[take_this]
-country_names <- country_names[take_this]
-
-rm(All_list_Cleaned)
 
 
-## 0.3 Setting the class names: Year, Size, Industry, 
+## 0.3 Setting the class names: Year, Size, Industry,
+load("Labels.Rda")
 
-# yaer index
-year_names <- c(2006:2015) 
-
-# industry index
-ind_name_table <- data.frame(ind_names = unique(All_list_Cleaned_cut[[15]]$NACE_CAT), 
-                             ind_names_alphabet = c("J", "L", "G", "C", "I", "H", "S", "P", "M", "K", "B", "N", "A", "Q", "R", "F", "E", "O", "D", "T"))
-
-ind_name_table <- ind_name_table[order(ind_name_table$ind_names_alphabet),]
-
-size_names <- c("S", "M", "L", "V") # size index
-names(size_names) <- 1:4 # create the numerical name for the size index
 
 
 ############ 1. a brief summary in a latex form: the number of obs for VA and EMPL variable ############ 
@@ -64,13 +23,14 @@ names(size_names) <- 1:4 # create the numerical name for the size index
 summary_1 <- list()
 for (k in 1:length(All_list_Cleaned_cut)) {
   zz <- All_list_Cleaned_cut[[k]] %>%
-    select(Year, IDNR, EMPL, VA) %>%
+    select(Year, IDNR, LP) %>%
     na.omit() %>%
     group_by(Year) %>%
     summarise(n = n())
 
   summary_1[[k]] <- zz
 }
+
 
 
 ## 1.2. arrange summary_1 to make it suitable for latex form
@@ -133,7 +93,7 @@ fun_diagnostic_1 <- function(dat) {
     ### Industry
 
     Ind_p <- zz %>%
-      select(Year, NACE_CAT, LP_g) %>%
+      select(Year, NACE_CAT, LP_diff) %>%
       na.omit() %>%
       group_by(Year, NACE_CAT) %>%
       summarise(n = n()) %>%
@@ -156,7 +116,7 @@ fun_diagnostic_1 <- function(dat) {
 
 # 2.1.1 "fun_plot_diag" function: plot function for proportion diagnostics: data type should be the one generated from fun_diagnostic_1 function. 
 fun_plot_diag <- function(pdf_name, title, dat, var_num, var_ind) { # this function has 5 arguments. 1) the name of the pdf file, 2) the title of the figure, 3) the data file that is generated from the fun_diagnostic_1 function, 4) variable number: 1:Size, 2: Industry, 5) variable index: either "size" or "ind"
-  pdf(paste(pdf_name, ".pdf", sep = ""), height = 6, width = 8)
+  pdf(paste(pdf_name, ".pdf", sep = ""), height = 6, width = 8.5)
   par(mfrow = c(4, 4), mar = c(3, 2.5, 1, 1), mgp = c(1.5, .3, 0), tck = -.01, oma = c(0, 0, 4, 0))
 
   if (var_ind == "size") { # for the size proportion
@@ -168,11 +128,11 @@ fun_plot_diag <- function(pdf_name, title, dat, var_num, var_ind) { # this funct
     legend("center", legend = leg, lty = rep(1, 5), lwd = 2, col = color_this, bty = "n", cex = 1)
   } else { # for industry proportion
     color_this <- c("grey", "blue", "green", "red", brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set3")) # 20 colors for each industry type
-    leg <- ind_name_table$ind_names_alphabet # the alphabetical index for industry type
+    leg <- ind_name_table$ind_names_short # the alphabetical index for industry type
 
     plot(c(1:1), c(1:1), yaxt = "n", xaxt = "n", main = "", cex.main = 1.2, xlab = "", ylab = "", lty = "blank", pch = 20, cex = .0, bty = "n") # empty plot
 
-    legend("center", legend = leg, lty = rep(1, 20), lwd = 2, col = color_this, bty = "n", cex = .8, ncol = 3)
+    legend("center", legend = leg, lty = rep(1, 20), lwd = 2, col = color_this, bty = "n", cex = .7, ncol = 3)
   }
 
 
@@ -224,39 +184,46 @@ fun_plot_diag(pdf_name = "Figure_Size_Proportion", title = "Size Proportion by C
 # plot for industry proportion
 fun_plot_diag(pdf_name = "Figure_Ind_Proportion", title = "Size Proportion by Industry", dat = diag_size_ind, var_num = 2, var_ind = "ind") # var_num = 1s means industry variable
 
-# detach("package:tidyr", unload=TRUE)
 
 
-############  3. Plots for the distributions for Top 5 countries ############
+
+  ############  3. Plots for the distributions for Top 5 countries ############
 ## 3.1. Data set up for top 5 countries
 
-country_names_five <- c("France", "Germany", "Italy", "Spain", "United Kingdom") # name of the five largest EU countries 
 
 Five_list_Cleaned <-
   All_list_Cleaned_cut[which(country_names %in% country_names_five)] # take the subsample of the the five largest EU countries 
 
 
 ## 3.2. Set up a plot function "fun_plot_marginal" for the distribution of the target variable conditional on each class
-fun_plot_marginal <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_names, neg_cut, pov_cut, cut_num, n_col) { # this plotting function is applied to the data object "Five_list_Cleaned". It has 10 arguments: 1) the name of the pdf file, 2) the title of the figure, 3) the index of the variable that is used as the conditional class, 4) the target variable, 5) the name of the x label 6) the name of 3) variable components, 7) the cutting point on the left tail, 8) the cutting point on the right tail, 9) the minimum number of observations for each class, 10) the number of columns in the legend
+fun_plot_marginal <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_names, neg_cut, pov_cut, cut_num, n_col, leg_size) { # this plotting function is applied to the data object "Five_list_Cleaned". It has 11 arguments: 1) the name of the pdf file, 2) the title of the figure, 3) the name of the variable that is used for the conditional class, 4) the target variable name, 5) the name of the x label 6) the name of variable classes, 7) the cutting point on the left tail, 8) the cutting point on the right tail, 9) the minimum number of observations for each class, 10) the number of columns in the legend, 11) the size of the legend
 
-  pdf(paste(pdf_name, ".pdf", sep = ""), height = 2.7, width = 10)
-  par(mfrow = c(1, 5), mar = c(3, 2.5, 1, 1), mgp = c(1.5, .3, 0), tck = -.01, oma = c(0, 0, 4, 0))
-
+  pdf(paste(pdf_name, ".pdf", sep = ""),  height = 5.5, width = 8.5)
+  par(mfrow = c(2, 3), mar = c(3, 2.5, 1, 1), mgp = c(1.5, .3, 0), tck = -.01, oma = c(0, 0, 4, 0))
+  
+  color_ind <- c(brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set3"), "grey", "blue", "green", "red")[1:length(c_names)] # color index 
+  
+  
+  plot(1,1, cex = 0, yaxt = "n", xaxt = "n", xlab ="", ylab = "", main = "", bty = "n") # empty plot 
+  
+  # first create the legend box
+  if(cond_ind == "NACE_CAT"){ # when the conditional variable is the industry index, we use a separate indexing variable from the ind_name_table for the legend
+    legend("topleft", legend = ind_name_table$ind_names_short, pch = 1:length(ind_name_table$ind_names_short), col = color_ind[1:length(ind_name_table$ind_names_short)], bty = "n", xpd = NA, cex = leg_size, ncol = n_col)
+  }else{
+    legend("topleft", legend = c_names, pch = 1:length(c_names), col = color_ind[1:length(c_names)], bty = "n", xpd = NA, cex = leg_size, ncol = n_col)
+  }
+  
   for (k in 1:5) {
     print(k) # k is the country index
 
 
     dd <- Five_list_Cleaned[[k]] %>%
-      select(IDNR, Year, COMPCAT_one, NACE_CAT, LP, LP_g, Zeta, EMPL) %>%
+      select(IDNR, Year, COMPCAT, COMPCAT_one, NACE_CAT, LP, TFP, LP_diff, TFP_diff, LP_lr, TFP_lr, ZOMBIE, EMPL) %>%
       filter(EMPL > 1) %>% # remove self-employed persons
       mutate(LP = LP / 1000) %>% # change the unit scale of the labor productivity by dividing it by 1000
-      mutate(
-        LP_g = LP_g * 100, # percentage unit for the growth variables 
-        Zeta = Zeta * 100
-      )
+      mutate(LP_diff = LP_diff / 1000) 
 
     dd <- as.data.frame(dd) ## change the format of the data to data.frame for convenience
-
     dd$Cond <- dd[, cond_ind] # create a new column of the class variable for convenience
     dd$Var <- dd[, var_ind] # create a new column of the value variable for convenience
 
@@ -281,44 +248,36 @@ fun_plot_marginal <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_names
     x_max <- max(dd_info$x_max)
     y_max <- max(dd_info$y_max)
 
-    ## the following part will be repeated throughout the script. It is designed to make the coloring of plots consistent across different subsamples. How it works it the following. I have the names of all classes by year, size, and industry. Go to the section 0.3 to see the unique factor by three different categorization of firms. It is important to note that some samples do not have all the classes, e.g. Country A missing year 2007, size Small, and Industry 1,2,10. Therefore, I first assign unique pch and color to each member of all classes, e.g. pch = 1 and color "red" to year 2007 and use this coloring and shape of the plot for all classes in the subsample.
+    ## the following part will be repeated throughout the script. It is designed to make the coloring of plots consistent across different subsamples. How it works it the following. We have the names of all classes by year, size, and industry. It is important to note that some samples do not have all the classes, e.g. Country A missing year 2007, size Small, and Industry 1,2,10. Therefore, I first assign unique pch and color to each member of all classes (c_names), e.g. pch = 1 and color "red" to year 2007 and use this coloring and shape of the plot for all classes in the subsample.
     c_uni <- unique(dd$Cond) # unique class 
 
     c_uni_name <- c()
     c_uni_num <- c() 
-    c_uni_name_2 <- c()
+   
+      for (i in 1:length(c_uni)) {
+        c_uni_num[i] <- which(c_names %in% c_uni[i])
+      }
+      
+      c_uni_num <- sort(c_uni_num)
+      c_uni_name <- c_names[c_uni_num]
+      
     
-    for (i in 1:length(c_uni)) {
-      c_uni_num[i] <- which(c_names %in% c_uni[i])
-    }
-    
-    c_uni_num <- sort(c_uni_num)
-    c_uni_name <- c_names[c_uni_num]
-    
-    if(cond_ind == 4){
-      c_uni_name_2 <- ind_name_table$ind_names_alphabet[c_uni_num]
-    } else{
-      c_uni_name_2 <- c_uni_name
-    }
-
-     color_ind <- c(brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set3"), "grey", "blue", "green", "red")[1:length(c_names)] # color index 
-
-    plot(c(x_min, x_max), c(y_min, y_max), cex = 0, log = "y", yaxt = "n", xaxt = "n", cex.main = 1.2, xlab = x_lab, ylab = "Log-Density", main = country_names_five[k]) # empty plot 
+    # base plot
+      plot(c(x_min, x_max), c(y_min, y_max), cex = 0, log = "y", yaxt = "n", xaxt = "n", cex.main = 1.2, xlab = x_lab, ylab = "Log-Density", main = country_names_five[k]) # empty plot 
     axis(side = 1, lwd = 0.3, cex.axis = 0.9)
     axis(side = 2, lwd = 0.3, cex.axis = .9)
 
-    c_ind_all <- c()
+    c_ind_all <- c() # create an object to track the indexing
     for (c in 1:length(c_uni_name)) {
       c_lp <- dd$Var[dd$Cond == c_uni_name[c]] # get the variable conditional on each class
       c_hist <- hist(c_lp, breaks = seq(min(c_lp), max(c_lp), l = 100 + 1), plot = F) # hist info for the target variable
 
       c_ind <- which(c_names %in% c_uni_name[c]) 
-      points(c_hist$mids, c_hist$density, pch = c_ind, cex = 0.35, col = color_ind[c_ind])
+      points(c_hist$mids, c_hist$density, pch = c_ind, cex = 0.35, col = color_ind[c_ind]) # mid point and  the density
 
       c_ind_all[c] <- c_ind
     }
 
-    legend("topright", legend = c_uni_name_2, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = .8, ncol = n_col)
   }
   mtext(paste(title), side = 3, line = 1, outer = TRUE, cex = 1.1)
   dev.off()
@@ -335,29 +294,29 @@ neg_cut <- 0.0025 # negative cut-off point
 pov_cut <- 0.9975 # positive cut-off point
 
 
+# cross-sectional plots of LP and LP\_
 # cross-sectional plots of LP and LP\_change (country-year)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Year_LP", title = "Log Density of Labor Productivity", cond_ind = 2, var_ind = 5, x_lab = "LP", c_names = year_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
+names(Five_list_Cleaned[[1]])
 
-fun_plot_marginal(pdf_name = "Figure_Country_Year_LP_Growth", title = "Log Density of Labor Productivity Growth", cond_ind = 2, var_ind = 6, x_lab = "LP Growth(%)", c_names = year_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
+fun_plot_marginal(pdf_name = "Figure_Country_Year_LP", title = "Log Density of Labor Productivity", cond_ind = "Year", var_ind = "LP", x_lab = "LP", c_names = year_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, leg_size = 1.4)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Year_TFP_Growth", title = "Log Density of TFP Growth", cond_ind = 2, var_ind = 7, x_lab = "TFP (%)", c_names = year_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
+fun_plot_marginal(pdf_name = "Figure_Country_Year_LP_Change", title = "Log Density of Labor Productivity Change", cond_ind = "Year", var_ind = "LP_diff", x_lab = "LP Change", c_names = year_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, leg_size = 1.4)
+
 
 # cross-sectional plots of LP and LP\_change (country-size)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Size_LP", title = "Log Density of Labor Productivity", cond_ind = 3, var_ind = 5, x_lab = "LP", c_names = size_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal(pdf_name = "Figure_Country_Size_LP", title = "Log Density of Labor Productivity", cond_ind = "COMPCAT", var_ind = "LP", x_lab = "LP", c_names = size_names_long, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, leg_size = 1.4)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Size_LP_Growth", title = "Log Density of Labor Productivity Growth", cond_ind = 3, var_ind = 6, x_lab = "LP Growth(%)", c_names = size_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal(pdf_name = "Figure_Country_Size_LP_Change", title = "Log Density of Labor Productivity Changea", cond_ind = "COMPCAT", var_ind = "LP_diff", x_lab = "LP Change", c_names = size_names_long, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, leg_size = 1.4)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Size_TFP_Growth", title = "Log Density of TFP Growth", cond_ind = 3, var_ind = 7, x_lab = "TFP Growth(%)", c_names = size_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
 # cross-sectional plots of LP and LP\_change (country-industry)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP", title = "Log Density of Labor Productivity", cond_ind = 4, var_ind = 5, x_lab = "LP", c_names = ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP", title = "Log Density of Labor Productivity", cond_ind = "NACE_CAT", var_ind = "LP", x_lab = "LP", c_names = ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 2, leg_size = 1.2)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP_Growth", title = "Log Density of Labor Productivity Growth", cond_ind = 4, var_ind = 6, x_lab = "LP Growth(%)", c_names = ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal(pdf_name = "Figure_Country_Industry_LP_Change", title = "Log Density of Labor Productivity Change", cond_ind = "NACE_CAT", var_ind = "LP_diff", x_lab = "LP Change", c_names = ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 2, leg_size = 1.2)
 
-fun_plot_marginal(pdf_name = "Figure_Country_Industry_TFP_Growth", title = "Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "TFP Growth(%)", c_names =  ind_name_table$ind_names, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
 
 ############ 4. the distribution of the right tail parts ############
@@ -400,10 +359,11 @@ fun_plot_marginal_tail <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_
     
     # prepare data
     dd <- Five_list_Cleaned[[k]] %>%
-      select(IDNR, Year, COMPCAT_one, NACE_CAT, LP, LP_g, Zeta, EMPL) %>%
+      select(IDNR, Year, COMPCAT_one, NACE_CAT, LP, LP_diff, EMPL) %>%
       filter(EMPL > 1) %>%
-      mutate(LP = LP / 1000) %>%
-      mutate(LP_g = LP_g * 100)
+      mutate(LP = LP / 1000,
+             LP_diff = LP_diff / 1000) 
+
 
     dd <- as.data.frame(dd)
 
@@ -456,7 +416,7 @@ fun_plot_marginal_tail <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_
     
     c_uni_name <- c()
     c_uni_num <- c() 
-    c_uni_name_2 <- c()
+   
     
     for (i in 1:length(c_uni)) {
       c_uni_num[i] <- which(c_names %in% c_uni[i])
@@ -516,7 +476,7 @@ fun_plot_marginal_tail <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_
   }
 
   # legend for last plot and to the right outside the plotting area. 
-  if(cond_ind == 4){    # legend must be two column for industry plots (cond_ind==4)
+  if(cond_ind == "NACE_CAT"){    # legend must be two column for industry plots (cond_ind==4)
     c_uni_name_2 <- ind_name_table$ind_names_alphabet[c_uni_num] # only industry letter code for industry plots
     n_col <- 2
     legend("topright", inset=c(-0.525,0), legend = c_uni_name_2, pch = c_ind_all, col = color_ind[c_ind_all], bty = "n", xpd = NA, cex = 1.2, ncol = n_col)
@@ -535,45 +495,39 @@ fun_plot_marginal_tail <- function(pdf_name, title, cond_ind, var_ind, x_lab, c_
 # cut_tail is set to be 0.9
 
 ##cross-sectional plots of LP and LP\_change (country-year)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = 2, var_ind = 5, x_lab = "log(LP)", c_names = year_names, leg_pos = "topright", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = "Year", var_ind = "LP", x_lab = "log(LP)", c_names = year_names, leg_pos = "topright", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivity Growth", cond_ind = 2, var_ind = 6, x_lab = "log(LP Growth)", c_names = year_names, leg_pos = "topright", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_Change_pov_tail", title = "Right Tail of Log Density of Labor Productivity Change",  cond_ind = "Year", var_ind = "LP_diff", x_lab = "log(LP Change)", c_names = year_names, leg_pos = "topright", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 2, var_ind = 7, x_lab = "log(TFP Growth)", c_names = year_names, leg_pos = "topright", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 0, n_col = 2)
 
 #cross-sectional plots of LP and LP\_change (country-size)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = 3, var_ind = 5, x_lab = "log(LP)", c_names = size_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = "COMPCAT_one", var_ind = "LP", x_lab = "log(LP)", c_names = size_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivity Growth", cond_ind = 3, var_ind = 6, x_lab = "log(LP Growth)", c_names = size_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Change_pov_tail", title = "Right Tail of Log Density of Labor Productivity Change",cond_ind = "COMPCAT_one", var_ind = "LP_diff", x_lab = "log(LP Change)", c_names = size_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 3, var_ind = 7, x_lab = "log(TFP Growth)", c_names = size_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1)
 
 # cross-sectional plots of LP and LP\_change (country-industry)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = "NACE_CAT", var_ind = "LP", x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Growth_pov_tail", title = "Right Tail of Log Density of Labor Productivity Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Change_pov_tail", title = "Right Tail of Log Density of Labor Productivity Change", cond_ind = "NACE_CAT", var_ind = "LP_diff", x_lab = "log(LP Change)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_TFP_Growth_pov_tail", title = "Right Tail of Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "log(TFP Growth)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3)
 
 
 ## 4.3. Negative tail plots
 # cross-sectional plots of LP and LP\_change (country-year)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = 2, var_ind = 5, x_lab = "log(LP)", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = "Year", var_ind = "LP", x_lab = "log(LP)", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivity Growth", cond_ind = 2, var_ind = 6, x_lab = "log(LP Growth)", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_Change_neg_tail", title = "Left Tail of Log Density of Labor Productivity Change", cond_ind = "Year", var_ind = "LP_diff",  x_lab = "log(LP Change)", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 2, var_ind = 7, x_lab = "log(TFP Growth)", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE)
 
 #cross-sectional plots of LP and LP\_change (country-size)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = 3, var_ind = 5, x_lab = "log(LP)", c_names = size_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, left_tail=TRUE)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = "COMPCAT_one", var_ind = "LP", x_lab = "log(LP)", c_names = size_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, left_tail=TRUE)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivity Growth", cond_ind = 3, var_ind = 6, x_lab = "log(LP Growth)", c_names = size_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, left_tail=TRUE)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Change_neg_tail", title = "Left Tail of Log Density of Labor Productivity Change", cond_ind = "COMPCAT_one", var_ind = "LP_diff", x_lab = "log(LP Change)", c_names = size_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, left_tail=TRUE)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 3, var_ind = 7, x_lab = "log(TFP Growth)", c_names = size_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, left_tail=TRUE)
 
 # cross-sectional plots of LP and LP\_change (country-industry)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = 4, var_ind = 5, x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, left_tail=TRUE)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = "NACE_CAT", var_ind = "LP", x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, left_tail=TRUE)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Growth_neg_tail", title = "Left Tail of Log Density of Labor Productivity Growth", cond_ind = 4, var_ind = 6, x_lab = "log(LP Growth)", c_names = ind_name_table$ind_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, left_tail=TRUE)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Change_neg_tail", title = "Left Tail of Log Density of Labor Productivity Change", cond_ind = "NACE_CAT", var_ind = "LP_diff", x_lab = "log(LP Change)", c_names = ind_name_table$ind_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, left_tail=TRUE)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_TFP_Growth_neg_tail", title = "Left Tail of Log Density of TFP Growth", cond_ind = 4, var_ind = 7, x_lab = "log(TFP Growth)", c_names = ind_name_table$ind_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, left_tail=TRUE)
