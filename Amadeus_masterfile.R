@@ -2,7 +2,7 @@
 
 # Load libraries
 if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
-pacman::p_load(dplyr,plyr,data.table,bit64)
+pacman::p_load(plyr,dplyr,data.table,bit64)
 
 
 # Functions
