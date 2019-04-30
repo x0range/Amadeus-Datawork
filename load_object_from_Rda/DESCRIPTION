@@ -1,0 +1,10 @@
+Package: load.object.from.Rda
+Title: Load one data.frame from Rda file into variable name
+Version: 0.1
+Description: Package loads one object from Rda file and returns it so 
+        that it can be saved into a specified variable name. It ascertains
+        that the Rda contains only one object and that this is a data.frame
+Depends: R (>= 3.1.0)
+Imports: 
+License: MIT Expat License (As is, no warranty)
+LazyData: true
