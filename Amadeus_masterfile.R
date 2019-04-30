@@ -2,14 +2,14 @@
 
 # Load libraries
 if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
-pacman::p_load(plyr,dplyr,data.table,bit64)
+pacman::p_load(plyr,dplyr,data.table,bit64,devtools)
 
+devtools::load_all("load_object_from_Rda")
 
 # Functions
 
 # Data cleaning function
 fun_data_clean <- function(dat){
-  
   data_c <- dat %>%
     filter(!is.na(CLOSDATE_year)) %>% # year
     filter(!is.na(IDNR)) %>% # firm indicator 
@@ -31,7 +31,7 @@ fun_data_clean <- function(dat){
            def_RTAS = as.numeric(RTAS) / p_ind_va,
            def_EBTA = as.numeric(EBTA) / p_ind_va,  # earnings
            def_EBIT = as.numeric(EBIT) / p_ind_va,
-           def_PL   = as.numeric(PL)   / p_ind_va,  # profits
+           #def_PL   = as.numeric(PL)   / p_ind_va,  # profits
            def_PLAT = as.numeric(PLAT) / p_ind_va,
            def_CF   = as.numeric(CF)   / p_ind_va,  # cash flow
            def_STAF = as.numeric(STAF) / p_ind_va,  # wages
@@ -56,7 +56,7 @@ fun_data_clean <- function(dat){
            RoC_G = as.numeric(CF)/(as.numeric(TOAS)+as.numeric(DEPR)), # gross profit rate with interest, CF = cash flow (gross profit + depreciation)
            RoC_G_FI = as.numeric(EBTA)/(as.numeric(FIAS)+as.numeric(DEPR)), # gross profit rate without interest 
            
-           RoC_G_AD = as.numeric(PL)/as.numeric(TOAS), # gross profit rate with interest after depreciation
+           RoC_G_AD = as.numeric(EBIT)/as.numeric(TOAS), # gross profit rate with interest after depreciation
            RoC_G_AD_FI = as.numeric(EBIT)/as.numeric(FIAS), # gross profit rate without interest after depreciation 
            
            RoC_N = as.numeric(PLAT)/as.numeric(TOAS), # net profit rate (after tax) 
@@ -85,7 +85,7 @@ fun_data_clean <- function(dat){
            def_RoC_G = as.numeric(def_CF)/(as.numeric(def_TOAS)+as.numeric(def_DEPR)), # gross profit rate with interest, CF = cash flow (gross profit + depreciation)
            def_RoC_G_FI = as.numeric(def_EBTA)/(as.numeric(def_FIAS)+as.numeric(def_DEPR)), # gross profit rate without interest 
            
-           def_RoC_G_AD = as.numeric(def_PL)/as.numeric(def_TOAS), # gross profit rate with interest after depreciation
+           def_RoC_G_AD = as.numeric(def_EBIT)/as.numeric(def_TOAS), # gross profit rate with interest after depreciation
            def_RoC_G_AD_FI = as.numeric(def_EBIT)/as.numeric(def_FIAS), # gross profit rate without interest after depreciation 
            
            def_RoC_N = as.numeric(def_PLAT)/as.numeric(def_TOAS) # net profit rate (after tax) 
@@ -152,7 +152,7 @@ fun_data_clean <- function(dat){
            ) %>% # G_CP
     
     # etc
-    
+
     mutate(PW_g = (PW - lag(PW,1))/lag(PW,1)) %>% #
     mutate(PW_AD_g = (PW_AD - lag(PW_AD,1))/lag(PW_AD,1)) %>% #
     
@@ -225,35 +225,48 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
   
   print(paste("         Commence reading data: ", filename))
   
+  # Set file names
   csv_filename = paste(filename, ".csv", sep="")
-  #csv_filename = paste(filename, ".Rda", sep="")
+  rda_filename = paste(filename, ".Rda", sep="")
   
-  cdata <- fread(csv_filename, header=T, stringsAsFactors = F)
+  #cdata <- fread(csv_filename, header=T, stringsAsFactors = F)
+  #
+  #save(cdata, file = paste(filename, ".Rda", sep = ""))
+  ##load(rfn)
   
-  save(cdata, file = paste(filename, ".Rda", sep = ""))
-  #load(rfn)
+  # Load data from Rda
+  cdata <- load_object_from_Rda(rda_filename)
   
   # 2. Assign NUTS codes by matching ZIP codes to ZIP-NUTS correspondence files
-
-  if (sum(country_name == c("Ireland", "Malta", "Poland", "Portugal", "Sweden"))==1){
-    cdata$ZIPCODE <- cdata$ZIPCODE # as.integer, as.character, or none
-  } else if(sum(country_name == c("United Kingdom"))==1){
-    cdata$ZIPCODE <- as.character(cdata$ZIPCODE)
-  } else{
-    cdata$ZIPCODE <- as.integer(cdata$ZIPCODE)
-  }
+    
+  print("loading finished")  
   
-  if (!is.na(filename_nuts)) {
-    cdata_nuts <- read.csv(filename_nuts, header=T, sep=";", stringsAsFactors = F)
-    #join nuts into data, 
-    # ZIP code to NUTS code mapping files are available for most countries from #http://ec.europa.eu/eurostat/tercet/flatfiles.do
-    #                                     for Albania, I created one since the mapping is straightforward
-    #                                     for Monaco, Russia, Moldova, Bosnia and Herzegovina, Ukraine, Belarus, there are no NUTS codes and therefore no valid mapping; for Serbia, the NUTS codes exist but are apparently not published or at least not easily available.
-    cdata <- merge(cdata, cdata_nuts, by.x="ZIPCODE", by.y="CODE", all.x=TRUE)
-    #compute NUTS 1 2 3, 
-    cdata$NUTS_2 <- substr(cdata$NUTS_3, 1, 4)
-    cdata$NUTS_1 <- substr(cdata$NUTS_3, 1, 3)
-  } else {
+  if ("ZIPCODE" %in% colnames(cdata)) {     # catch input files with missing ZIPCODE column
+    if (sum(country_name == c("Ireland", "Malta", "Poland", "Portugal", "Sweden"))==1){
+      cdata$ZIPCODE <- cdata$ZIPCODE # as.integer, as.character, or none
+    } else if(sum(country_name == c("United Kingdom"))==1){
+      cdata$ZIPCODE <- as.character(cdata$ZIPCODE)
+    } else{
+      cdata$ZIPCODE <- as.integer(cdata$ZIPCODE)
+    }
+    
+    if (!is.na(filename_nuts)) {
+      cdata_nuts <- read.csv(filename_nuts, header=T, sep=";", stringsAsFactors = F)
+      #join nuts into data, 
+      # ZIP code to NUTS code mapping files are available for most countries from #http://ec.europa.eu/eurostat/tercet/flatfiles.do
+      #                                     for Albania, I created one since the mapping is straightforward
+      #                                     for Monaco, Russia, Moldova, Bosnia and Herzegovina, Ukraine, Belarus, there are no NUTS codes and therefore no valid mapping; for Serbia, the NUTS codes exist but are apparently not published or at least not easily available.
+      cdata <- merge(cdata, cdata_nuts, by.x="ZIPCODE", by.y="CODE", all.x=TRUE)
+      #compute NUTS 1 2 3, 
+      cdata$NUTS_2 <- substr(cdata$NUTS_3, 1, 4)
+      cdata$NUTS_1 <- substr(cdata$NUTS_3, 1, 3)
+    } else {
+      cdata$NUTS_3 <- NA
+      cdata$NUTS_2 <- NA
+      cdata$NUTS_1 <- NA
+    }
+  } else {          # Fill with NA if ZIPCODE column is not provided
+    cdata$ZIPCODE <- NA
     cdata$NUTS_3 <- NA
     cdata$NUTS_2 <- NA
     cdata$NUTS_1 <- NA
@@ -261,22 +274,28 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
 
   # 3. Assign deflators by matching country, year, and NACE codes to industry level deflators from EUKLEMS
   
-  load("DEF_KLEMS_2017ii.Rda")  # reads DataFrame object all_p_ind with columns c("nace2", "def_cd", "ctry", "year", "p_ind_va", "p_ind_go", "p_ind_cp")
+  load("DEF_KLEMS_2017ii_EU.Rda")  # reads DataFrame object all_p_ind with columns c("nace2", "def_cd", "ctry", "year", "p_ind_va", "p_ind_go", "p_ind_cp")
   all_p_ind <- all_p_ind[all_p_ind$ctry==country_abbrv,]    # select country in deflator data frame
   all_p_ind$ctry <- NULL                                    # remove unused variables
   all_p_ind$def_cd <- NULL
   all_p_ind$nace2 <- as.numeric(all_p_ind$nace2)            # change NACE code to numeric to match firm data file structure
-  all_p_ind<-transform(all_p_ind, p_ind_va=p_ind_va/100., p_ind_go=p_ind_go/100., p_ind_cp=p_ind_cp/100.)
-  colnames(all_p_ind) <- c("NACE_PRIM_CODE", "CLOSDATE_year", "p_ind_va", "p_ind_go", "p_ind_cp")   # replace colnames to match firm data file structure
+  all_p_ind<-transform(all_p_ind, p_ind_va=p_ind_va/100., p_ind_go=p_ind_go/100., p_ind_cp=p_ind_cp/100., p_ind_go_eu=p_ind_go_eu/100., p_ind_go_eu_parent=p_ind_go_eu_parent/100.)
+  colnames(all_p_ind) <- c("NACE_PRIM_CODE", "CLOSDATE_year", "p_ind_va", "p_ind_go", "p_ind_cp", "p_ind_go_eu", "p_ind_go_eu_parent")   # replace colnames to match firm data file structure
   all_p_ind <- all_p_ind[!is.na(all_p_ind$NACE_PRIM_CODE),]                                         # remove NA NACE codes to prevent incorrect merge results
   cdata <- merge(cdata, all_p_ind, by=c("NACE_PRIM_CODE", "CLOSDATE_year"), all.x=TRUE)             # merge deflators into firm data frame (data.table, actually)
   
   # 4. compute firm age from CLOSDATE_year and DATEINC_char
   cdata$CLOSDATE_year <- as.numeric(cdata$CLOSDATE_year)
-  cdata$DATEINC_char <- as.character(cdata$DATEINC_char)
-  cdata$DATEINC_year <- as.numeric(regmatches(cdata$DATEINC_char, gregexpr("\\d\\d\\d\\d+", cdata$DATEINC_char)))
-  cdata[cdata$DATEINC_year > cdata$CLOSDATE_year]$DATEINC_year <- NA      # no negative firm ages
-  cdata$Firm_Age <-  cdata$CLOSDATE_year - cdata$DATEINC_year
+  
+  if ("DATEINC_char" %in% colnames(cdata)) {      # catch input files with missing incorporation date column
+    cdata$DATEINC_char <- as.character(cdata$DATEINC_char)
+    cdata$DATEINC_year <- as.numeric(regmatches(cdata$DATEINC_char, gregexpr("\\d\\d\\d\\d+", cdata$DATEINC_char)))
+    cdata[cdata$DATEINC_year > cdata$CLOSDATE_year]$DATEINC_year <- NA      # no negative firm ages
+    cdata$Firm_Age <-  cdata$CLOSDATE_year - cdata$DATEINC_year
+  } else {          # Fill with NA if incorporation date column is not provided
+    cdata$DATEINC_char <- NA
+    cdata$Firm_Age <- NA
+  }
   
   # 5. clean data
   print("     Reading data complete ... commence cleaning")
@@ -294,8 +313,9 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
   Cleaned_dat_INDEX <- data.frame(
     IDNR = IDNR, Year = CLOSDATE_year, NUTS_1 = NUTS_1, NUTS_2 = NUTS_2,
     NUTS_3 = NUTS_3,  NACE_PRIM_CODE =  NACE_PRIM_CODE, CONSOL = CONSOL, 
-    COMPCAT = COMPCAT, LSTATUS = LSTATUS, QUOTED = QUOTED, Firm_Age = Firm_Age, 
-    EXCHRATE = EXCHRATE
+    COMPCAT = COMPCAT, Firm_Age = Firm_Age 
+#    COMPCAT = COMPCAT, LSTATUS = LSTATUS, QUOTED = QUOTED, Firm_Age = Firm_Age, 
+#    EXCHRATE = EXCHRATE
   )
   
   Cleaned_dat_Profitability <- data.frame(
