@@ -287,6 +287,10 @@ fun_read_by_country <- function(filename, country_name, country_abbrv, filename_
   # 4. compute firm age from CLOSDATE_year and DATEINC_char
   cdata$CLOSDATE_year <- as.numeric(cdata$CLOSDATE_year)
   
+  if ("DATEINC" %in% colnames(cdata)) {      # catch input files with missing DATEINC_char but present DATEINC
+    cdata$DATEINC_char <- as.character(cdata$DATEINC)
+  }
+  
   if ("DATEINC_char" %in% colnames(cdata)) {      # catch input files with missing incorporation date column
     cdata$DATEINC_char <- as.character(cdata$DATEINC_char)
     cdata$DATEINC_year <- as.numeric(regmatches(cdata$DATEINC_char, gregexpr("\\d\\d\\d\\d+", cdata$DATEINC_char)))
