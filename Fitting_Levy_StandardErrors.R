@@ -96,6 +96,9 @@ load("All_list_Cleaned.Rda", verbose=T) ## load the data file created from "Prod
 neg_cut <- 0.0025 # negative cut-off point
 pov_cut <- 0.9975 # positive cut-off point
 year_names <- 2006:2015
+size_names_long <- c("VERY LARGE", "LARGE", "MEDIUM SIZED", "SMALL")
+ind_names_long <- c("ACCOMMODATION AND FOOD SERVICE ACTIVITIES", "ADMINISTRATIVE AND SUPPORT SERVICE ACTIVITIES", "AGRICULTURE, FORESTRY AND FISHING", "ARTS, ENTERTAINMENT AND RECREATION", "CONSTRUCTION", "EDUCATION", "FINANCIAL AND INSURANCE ACTIVITIES", "HUMAN HEALTH AND SOCIAL WORK ACTIVITIES", "MINING AND QUARRYING", "OTHER SERVICE ACTIVITIES", "PROFESSIONAL, SCIENTIFIC AND TECHNICAL ACTIVITIES", "PUBLIC ADMINISTRATION AND DEFENCE; COMPULSORY SOCIAL SECURITY", "REAL ESTATE ACTIVITIES")
+# TODO ind_names_long should instead be generically populated from ind_name_table$ind_names
 
 ## Year class
 # LP conditional on year (year class)
@@ -117,10 +120,10 @@ save(LP_size_Levy_GMM_df_SE, LP_Change_size_Levy_GMM_df_SE, file = "Size_Levy_GM
 
 ## Industry class
 # LP conditional on sector
-LP_ind_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned, bin_num = 100, cond_ind = "NACE_CAT", var_ind = "LP", c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_ind_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned, bin_num = 100, cond_ind = "NACE_CAT", var_ind = "LP", c_names = ind_names_long, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 # LP_change conditional on sector
-LP_Change_ind_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned, bin_num = 100, cond_ind = "NACE_CAT", var_ind = "LP_diff", c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_Change_ind_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned, bin_num = 100, cond_ind = "NACE_CAT", var_ind = "LP_diff", c_names = ind_names_long$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 save(LP_ind_Levy_GMM_df_SE, LP_Change_ind_Levy_GMM_df_SE, file = "Industry_Levy_GMM_df_SE.Rda")
 
