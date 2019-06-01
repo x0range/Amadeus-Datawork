@@ -81,8 +81,8 @@ fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_
 # main entry point
 
 ##  1.1. loading of required data and cleaning
-load("All_list_Cleaned_cut.Rda", verbose=T) ## load the data file created from "Productivity_Analysis_Data.Rmd"
 load("Labels.Rda", verbose=T)
+load("All_list_Cleaned_cut.Rda", verbose=T) ## load the data file created from "Productivity_Analysis_Data.Rmd"
 
 
 
