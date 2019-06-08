@@ -15,7 +15,7 @@ devtools::load_all("fittinglevy")
 ## 0.3 remaining function definitions: 
 # the fuction for the fitting result
 fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_cut, pov_cut) { # the function takes 8 arguments: 1) data generated and cleaned in section 0.2, 2) the number of bins, 3) the index of the variable that is used for the conditional class, 4) the target variable name, 5) the name of class, 6) the minimum number of observations for each class,  7) the cutting point on the left tail, 8) the cutting point on the right tail
-  results_df <- data.frame(Fit_Variable=character(), Separator_Variable=character(), Class=character(), class_idx=integer(), Country=character(), country_idx=integer(), Observations=integer(), Levy_alpha=double(), Levy_beta=double(), Levy_gamma=double(), Levy_delta=double(), Levy_alpha_Standard_Error=double(), Levy_beta_Standard_Error=double(), Levy_gamma_Standard_Error=double(), Levy_delta_Standard_Error=double(), stringsAsFactors=FALSE)
+  results_df <- data.frame(Fit_Variable=character(), Separator_Variable=character(), Class=character(), class_idx=integer(), Country=character(), country_idx=integer(), Observations=integer(), Levy_alpha=double(), Levy_beta=double(), Levy_gamma=double(), Levy_delta=double(), Levy_alpha_Standard_Error=double(), Levy_beta_Standard_Error=double(), Levy_gamma_Standard_Error=double(), Levy_delta_Standard_Error=double(), Levy_Soofi_ID=double(), stringsAsFactors=FALSE)
 
   c_uni_list <- list()
   c_uni_num_list <- list()
@@ -62,7 +62,7 @@ fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_
 
         levy_result <- levy_fitting(dat_t = c_lp, bin_num = bin_num, include_standarderror=TRUE, include_Soofi=TRUE, fitting_method="GMM") # Levy estimation
         
-        results_df[nrow(results_df)+1,] = list(var_ind, cond_ind, c_uni_name[[c]], c, country_names[[k]], k, length(c_lp), levy_result$levy_para[[1]], levy_result$levy_para[[2]], levy_result$levy_para[[3]], levy_result$levy_para[[4]], levy_result$standard_errors[[1]], levy_result$standard_errors[[2]], levy_result$standard_errors[[3]], levy_result$standard_errors[[4]])    
+        results_df[nrow(results_df)+1,] = list(var_ind, cond_ind, c_uni_name[[c]], c, country_names[[k]], k, length(c_lp), levy_result$levy_para[[1]], levy_result$levy_para[[2]], levy_result$levy_para[[3]], levy_result$levy_para[[4]], levy_result$standard_errors[[1]], levy_result$standard_errors[[2]], levy_result$standard_errors[[3]], levy_result$standard_errors[[4]], levy_result$levy_soofi)    
         print(results_df)
         #results_df <- data.frame(Fit_Variable=character(), Separator_Variable=character(), Class=character(), class_idx=integer(), Country=character(), country_idx=integer(), Observations=integer(), Levy_alpha=double(), Levy_beta=double(), Levy_gamma=double(), Levy_delta=double(), Levy_alpha_Standard_Error=double(), Levy_beta_Standard_Error=double(), Levy_gamma_Standard_Error=double(), Levy_delta_Standard_Error=double(), stringsAsFactors=FALSE)
         #c_list[[c]] <- list(levy_para = levy_result$levy_para, levy_soofi = levy_result$levy_soofi, est_levy_std_error = levy_result$est_levy_std_error, data_mid = levy_result$data_mid , data_p = levy_result$data_p, levy_q = levy_result$levy_q)
