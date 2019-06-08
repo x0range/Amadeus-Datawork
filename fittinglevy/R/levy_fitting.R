@@ -71,7 +71,7 @@ levy_fitting <- function(dat_t, bin_num, include_bootstrap=FALSE, include_standa
     est_levy_std_error <- NULL
   }
 
-  if (include_Soofi) {
+  if (include_Soofi & !is.na(est_levy[1])) {
     p_data_h <- hist(p_data, plot = F, breaks = seq(min(p_data), max(p_data), l = bin_num)) # binning the data
 
       
