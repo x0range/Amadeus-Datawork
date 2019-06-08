@@ -68,7 +68,7 @@ levy_fitting <- function(dat_t, bin_num, include_bootstrap=FALSE, include_standa
 
     #est_levy_np_std_error <- boot(p_data, Levy_fun_QT, R=1000, sim="parametric", ran.gen=get_stabledist_variates, mle=est_levy, parallel="multicore", ncpus=3)
   } else {
-    est_levy_std_error <- NULL
+    est_levy_std_error <- NA
   }
 
   if (include_Soofi & !is.na(est_levy[1])) {
@@ -85,10 +85,10 @@ levy_fitting <- function(dat_t, bin_num, include_bootstrap=FALSE, include_standa
     levy_soofi <- 1 - soofi_gen(obs_p, pred_p_levy) # soofi index
     levy_soofi_ID_index <- round(levy_soofi, 4) * 100
   } else {
-    obs_mid <- NULL
-    obs_p <- NULL
-    pred_p_levy <- NULL
-    levy_soofi_ID_index <- NULL
+    obs_mid <- NA
+    obs_p <- NA
+    pred_p_levy <- NA
+    levy_soofi_ID_index <- NA
   }
 
   ok_list <- list(raw_data = p_data, data_mid = obs_mid, data_p = obs_p, levy_q = pred_p_levy, levy_para = est_levy, levy_soofi = levy_soofi_ID_index, est_levy_std_error = est_levy_std_error, standard_errors = standard_errors)
