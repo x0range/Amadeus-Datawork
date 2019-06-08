@@ -60,7 +60,7 @@ fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_
         print(paste(length(c_uni), c))
         c_lp <- zz$Var[zz$Cond == c_uni_name[c]] # for each class
 
-        levy_result <- levy_fitting(dat_t = c_lp, bin_num = bin_num, include_standarderror=TRUE, include_Soofi=FALSE, fitting_method="GMM") # Levy estimation
+        levy_result <- levy_fitting(dat_t = c_lp, bin_num = bin_num, include_standarderror=TRUE, include_Soofi=TRUE, fitting_method="GMM") # Levy estimation
         
         results_df[nrow(results_df)+1,] = list(var_ind, cond_ind, c_uni_name[[c]], c, country_names[[k]], k, length(c_lp), levy_result$levy_para[[1]], levy_result$levy_para[[2]], levy_result$levy_para[[3]], levy_result$levy_para[[4]], levy_result$standard_errors[[1]], levy_result$standard_errors[[2]], levy_result$standard_errors[[3]], levy_result$standard_errors[[4]])    
         print(results_df)
