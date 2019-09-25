@@ -2,7 +2,7 @@ rm(list=ls()) # clear environment
 gc() # clear memory
 
 if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org') # get this package if you don't have it
-pacman::p_load(tidyverse,data.table) # load these packages, install if necessary
+pacman::p_load(tidyverse,data.table,eurostat) # load these packages, install if necessary
 
 '%!in%' <- function(x,y)!('%in%'(x,y)) # a function I use for convenience
 
@@ -97,3 +97,90 @@ rm(all_p_ind_cp, klems_cp)
 
 all_p_ind <- all_p_ind %>% filter(!(is.na(p_ind_cp) & is.na(p_ind_va) & is.na(p_ind_go))) # remove observations where no deflators exist - saves space
 save(all_p_ind, file = 'DEF_KLEMS_2017ii.Rda')
+
+
+### EU deflators ###
+
+nace_2_eu <- read_csv("~/Work/DEF_KLEMS_2017ii/CL_NACE2_20190417_170805.csv")[, 2:5]
+
+# to do: EU's NACE classifications are assigned a unique sorting code, even for the aggregated statistics. 
+# These need to be assigned to the existing 4-digit codes, using the most granular approach possible
+
+# start by assigning the sort codes to the all_id list
+colnames(nace_2_eu) <- c('level', 'sort', 'parent', 'code')
+nace_2_eu <- nace_2_eu %>%
+  mutate(
+    four_digit_code = ifelse(level == 4 & nchar(code) == 5, substr(code, start = 2, stop = 5), NA)
+  )
+
+all_id <- all_id %>% left_join(nace_2_eu %>% select(Code = four_digit_code, sort), by = 'Code')
+
+nace_2_eu <- nace_2_eu %>%
+  mutate(
+    three_digit_code = ifelse(level == 3 & nchar(code) == 4, 
+                              paste(substr(code, start = 2, stop = 4), '0', sep = ''),
+                              NA)
+  )
+
+all_id <- all_id %>% 
+  left_join(nace_2_eu %>% select(Code = three_digit_code, sort_3 = sort), by = 'Code') %>%
+  mutate(sort = ifelse(is.na(sort), sort_3, sort)) %>%
+  select(-sort_3)
+
+nace_2_eu <- nace_2_eu %>%
+  mutate(
+    two_digit_code = ifelse(level == 2 & nchar(code) == 3, 
+                            paste(substr(code, start = 2, stop = 3), '00', sep = ''),
+                            NA)
+  )
+
+all_id <- all_id %>% 
+  left_join(nace_2_eu %>% select(Code = two_digit_code, sort_2 = sort), by = 'Code') %>%
+  mutate(sort = ifelse(is.na(sort), sort_2, sort)) %>%
+  select(-sort_2)
+
+
+all_id <- all_id %>% 
+  left_join(nace_2_eu %>% select(Code = code, sort_1 = sort), by = 'Code') %>%
+  mutate(sort = ifelse(is.na(sort), sort_1, sort)) %>%
+  select(-sort_1)
+
+# get the parents for each sort code
+all_id <- all_id %>% left_join(nace_2_eu %>% select(sort, parent), by = 'sort')
+
+# re-read the nace file, and join the deflators where possible
+# select deflators indexed to 2010, same as KLEMS
+# only select total output index
+
+nace_2_eu <- read_csv("~/Work/DEF_KLEMS_2017ii/CL_NACE2_20190417_170805.csv")[, 2:5]
+colnames(nace_2_eu) <- c('level', 'sort', 'parent', 'code')
+class(nace_2_eu$code) <- 'character'
+
+eu_ppi_industry <- get_eurostat('sts_inpp_a', time_format = 'num', stringsAsFactors = FALSE)
+eu_ppi_services <- get_eurostat('sts_sepp_a', time_format = 'num', stringsAsFactors = FALSE)
+
+eu_ppi_industry <- eu_ppi_industry %>% filter(unit == 'I10' & indic_bt == 'PRON') %>% select(-unit, -indic_bt)
+eu_ppi_services <- eu_ppi_services %>% filter(unit == 'I10' & indic_bt == 'PRON') %>% select(-unit, -indic_bt)
+eu_ppi <- rbind(eu_ppi_industry, eu_ppi_services) %>% 
+  rename(
+    ctry = geo,
+    year = time,
+    p_ind_go_eu = values
+  )
+rm(eu_ppi_industry, eu_ppi_services)
+
+# using all_id, join in the eu deflators where possible. If missing for any categories, supplument with the deflator from the parent group
+all_p_ind_eu <- eu_ppi %>% 
+  left_join(nace_2_eu %>% select(nace_r2 = code, sort), by = c('nace_r2')) %>%
+  select(-nace_r2, -s_adj)
+
+# add the sort column to the main table
+all_p_ind <- all_p_ind %>% left_join(all_id %>% filter(!duplicated(Code)) %>% select(nace2 = Code, sort, parent), by = 'nace2')
+
+all_p_ind <- all_p_ind %>% 
+  full_join(all_p_ind_eu %>% filter(sort %in% unique(all_id$sort)), by = c('ctry', 'year', 'sort')) %>%
+  left_join(all_p_ind_eu %>% filter(sort %in% unique(all_p_ind$parent)) %>% select(parent = sort, ctry, year, p_ind_go_eu_parent = p_ind_go_eu), by = c('ctry', 'year', 'parent')) %>%
+  left_join(all_id %>% select(nace2_sort = Code, sort) %>% filter(!duplicated(sort)), by = 'sort') %>%
+  mutate(nace2 = ifelse(is.na(nace2), nace2_sort, nace2)) %>%
+  select(-def_cd, -sort, -parent, -nace2_sort)
+save(all_p_ind, file = 'DEF_KLEMS_2017ii_EU.Rda')
