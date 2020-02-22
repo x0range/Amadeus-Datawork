@@ -20,7 +20,8 @@ The dependencies can be installed from the R shell with
 library(pacman)
 pacman:p_load(dplyr, StableEstim, lmomco, devtools, colorspace, RColorBrewer, msir, plotly, scales, 
 grDevices, boot, xtable, tidyr, zoo, ggplot2, cowplot, foreach, tidyverse, Rcpp, RcppArmadillo, 
-BH, gridextra, reshape2)```
+BH, gridextra, reshape2)
+```
 
 And (to install ```finity``` from ```https://github.com/x0range/finity```): Download the tar.gz and call
 
