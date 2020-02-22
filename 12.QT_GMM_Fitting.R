@@ -7,7 +7,7 @@ if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', 
 pacman::p_load(dplyr,StableEstim,devtools)
 
 ## 0.2 loading fitting functions from fitting.levy package
-devtools::load_all("~/eecon/git/Amadeus-Datawork/fittinglevy")
+devtools::load_all("fittinglevy")
 
 ## 0.3 remaining function definitions: 
 # the fuction for the fitting result
@@ -88,9 +88,8 @@ fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_
 # main entry point
 
 ##  1.1. loading of required data and cleaning
-#load("All_list_Cleaned.Rda") ## load the data file created from "Productivity_Analysis_Data.Rmd"
-load("~/datalake/Orbis_WRDS/All_list_Cleaned_cut.Rda")
-load("~/datalake/Orbis_WRDS/Labels.Rda", verbose=T)
+load("All_list_Cleaned_cut.Rda")
+load("Labels.Rda", verbose=T)
 
 ## 1.2 Cleaning
 ## Although we are loading cleaned data, we clean again, to make sure that cleaning was consistent
