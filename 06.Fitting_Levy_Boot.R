@@ -12,6 +12,7 @@ devtools::load_all("fittinglevy")
 load("All_list_Cleaned_cut.Rda") ## load the data file created from "Productivity_Analysis_Data.Rmd"
 load("Labels.Rda")
 
+## industry index for high-up classification
 ind_name_table <- ind_name_table %>% 
   mutate(ind_agg = ifelse(ind_names_short == "Agr" | ind_names_short == "Mine", "Arg",
                           ifelse(ind_names_short == "Elec" | ind_names_short == "Water", "Energy", 
@@ -22,7 +23,6 @@ ind_name_table <- ind_name_table %>%
                                                              ifelse(ind_names_short == "Edu"| ind_names_short == "Heath"| ind_names_short == "Public",  "NM_Ser", 
                                                                     ifelse(ind_names_short == "Whole" | ind_names_short == "Trans"| ind_names_short == "Accom"| ind_names_short == "Art"| ind_names_short == "Admin" | ind_names_short == "O-Serv", "NF_Ser", 
                                                                            NA)))))))))
-
 
 
 for(k in 1:15){
@@ -50,17 +50,22 @@ fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_
   for (k in 1:length(dat)) {
     print(k)
   
+  #sum(table(dat[[k]]$NACE_DES) > 1000)
+    
     zz <- dat[[k]] %>%
-      select(IDNR, Year, COMPCAT, NACE_CAT, ind_agg, LP, LP_diff, EMPL) %>% # Firm ID, Year, Firm Size, Industry ID, Labor Produtivity, Labor Productivity Change, Employment
+      select(IDNR, Year, COMPCAT, NACE_CAT, NACE_DES, ind_agg, LP, LP_diff, EMPL) %>% # Firm ID, Year, Firm Size, Industry ID, Labor Produtivity, Labor Productivity Change, Employment
       filter(EMPL > 1) %>% # remove self-employed persons
       mutate(LP = LP / 1000) %>% # change the unit scale of the labor productivity by dividing it by 1000
-      mutate(LP_diff = LP_diff / 1000) # percentage unit for the growth variables
+      mutate(LP_diff = LP_diff / 1000) %>% # percentage unit for the growth variables
+      group_by(IDNR) %>% 
+      mutate(Year_diff = Year - lag(Year,1)) %>%
+      mutate(LP_diff = ifelse(Year_diff > 1, NA, LP_diff))
+
     
     zz <- as.data.frame(zz)
     
     zz$Cond <- zz[, cond_ind] # create a new column of the class variable
     zz$Var <- zz[, var_ind] # create a new column of the value variable
-    
     
     zz <- zz %>%
       select(IDNR, Year, Var, Cond) %>%
@@ -91,7 +96,7 @@ fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_
         c_lp <- zz$Var[zz$Cond == c_uni_name[c]] # for each class
 
         levy_result <- levy_fitting(dat_t = c_lp, bin_num = bin_num, include_bootstrap=TRUE) # Levy estimation
-        levy_result$levy_para
+        #levy_result$levy_para
             
         c_list[[c]] <- list(levy_para = levy_result$levy_para, levy_soofi = levy_result$levy_soofi, est_levy_std_error = levy_result$est_levy_std_error, data_mid = levy_result$data_mid , data_p = levy_result$data_p, levy_q = levy_result$levy_q)
       }
@@ -134,10 +139,11 @@ pov_cut <- 0.9975 # positive cut-off point
 #   diff_est[[k]] <- no_cut - cut
 # }
 
+# LP conditional on year
 LP_year_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
 
-LP_year_Levy_list_boot_uncut <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = 0, pov_cut = 1)
-
+#LP without cutting tails
+#LP_year_Levy_list_boot_uncut <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = 0, pov_cut = 1)
 
 # LP_change conditional on year
 LP_Change_year_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP_diff", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
@@ -154,9 +160,6 @@ LP_Change_size_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_nu
 save(LP_size_Levy_list_boot, LP_Change_size_Levy_list_boot, file = "Size_Levy_list_boot.Rda")
 
 ## Industry class
-
-
-
 # LP conditional on sector
 LP_ind_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "NACE_CAT", var_ind = "LP", c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
 
@@ -166,12 +169,26 @@ LP_Change_ind_Levy_list_boot <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num
 save(LP_ind_Levy_list_boot, LP_Change_ind_Levy_list_boot, file = "Industry_Levy_list_boot.Rda")
 
 # LP conditional on sector
+#load("Industry_Levy_list_boot_sim.Rda")
 LP_ind_Levy_list_boot_sim <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "ind_agg", var_ind = "LP", c_names = unique(ind_name_table$ind_agg),  cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 # LP_change conditional on sector
 LP_Change_ind_Levy_list_boot_sim <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "ind_agg", var_ind = "LP_diff", c_names = unique(ind_name_table$ind_agg),  cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 save(LP_ind_Levy_list_boot_sim, LP_Change_ind_Levy_list_boot_sim, file = "Industry_Levy_list_boot_sim.Rda")
+
+# detailed sectors
+all_ind_names <- lapply(All_list_Cleaned_cut, function(x) unique(x$NACE_DES))
+ind_names_detail <- Reduce(union, all_ind_names) # Union of all ind names across countries
+
+
+LP_ind_Levy_list_boot_detail <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "NACE_DES", var_ind = "LP", c_names = ind_names_detail, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
+
+# LP_change conditional on sector
+LP_Change_ind_Levy_list_boot_detail <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "NACE_DES", var_ind = "LP_diff", c_names = ind_names_detail, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
+
+save(LP_ind_Levy_list_boot_detail, LP_Change_ind_Levy_list_boot_detail, file = "Industry_Levy_list_boot_detail.Rda")
+
 
 
 #### LP_g and TFP_g (removing negative value added)
@@ -189,12 +206,27 @@ fun_fit_levy_g<- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg
       mutate(LP = LP / 1000) %>% # change the unit scale of the labor productivity by dividing it by 1000
       group_by(IDNR) %>% 
       filter(LP > 0) %>% # keep positive value added
+      filter(CP > 0) %>% # keep positive value added
       mutate(LP_g = (LP - lag(LP,1))/lag(LP,1),
-             log_LP = log(LP),
-             LP_lg = log(LP/lag(LP,1)),
              CP_g = (CP - lag(CP,1))/lag(CP,1),
-             TFP_g = LP_g*WS + CP_g*(1-WS),
+             TFP_g = LP_g*lag(WS,1) + CP_g*(1-lag(WS,1)),
+             log_LP = log(LP),
+             log_CP = log(CP),
+             log_TFP = WS*log_LP + (1-WS)*log_CP,
+             LP_lg = log(LP/lag(LP,1)),
+             CP_lg = log(CP/lag(CP,1)),
+             TFP_lg = LP_lg*lag(WS,1) + CP_lg*(1-lag(WS,1)),
              LP_diff = LP_diff / 1000) %>%
+      mutate(Year_diff = Year - lag(Year,1)) %>%
+      mutate(LP_g = ifelse(Year_diff > 1, NA, LP_g),
+             CP_g = ifelse(Year_diff > 1, NA, CP_g),
+             TFP_g = ifelse(Year_diff > 1, NA, TFP_g),
+             LP_lg = ifelse(Year_diff > 1, NA, LP_lg),
+             CP_lg = ifelse(Year_diff > 1, NA, CP_lg),
+             TFP_lg = ifelse(Year_diff > 1, NA, TFP_lg),
+             LP_diff = ifelse(Year_diff > 1, NA, LP_diff)
+             ) %>% 
+    
       #mutate(lag_neg = sign(lag(LP,1))) %>%
       #filter(lag_neg == 1) %>%
       arrange(IDNR)
@@ -250,7 +282,7 @@ fun_fit_levy_g<- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg
         
         levy_result <- levy_fitting(dat_t = c_lp, bin_num = bin_num, include_bootstrap=TRUE) # Levy estimation
         
-        
+
         c_list[[c]] <- list(levy_para = levy_result$levy_para, levy_soofi = levy_result$levy_soofi, est_levy_std_error = levy_result$est_levy_std_error, data_mid = levy_result$data_mid , data_p = levy_result$data_p, levy_q = levy_result$levy_q)
       }
       c_uni_list[[k]] <- c_uni_name # record the ordered name of unique class
@@ -264,9 +296,9 @@ fun_fit_levy_g<- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg
 }
 
 
-
 ## Year class
 # LP conditional on year *non-neg
+#load("Year_non_neg_Levy_list_boot.Rda")
 LP_year_non_neg_Levy_list_boot <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 LP_year_log_Levy_list_boot <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "log_LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
@@ -285,6 +317,7 @@ LP_lg_year_Levy_list_boot <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num 
 TFP_g_year_Levy_list_boot <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "TFP_g", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 save(LP_g_year_Levy_list_boot, LP_lg_year_Levy_list_boot, TFP_g_year_Levy_list_boot, file = "Year_Levy_list_boot_g.Rda")
+
 
 ## Size class
 # LP conditional on size *non-neg
@@ -311,7 +344,7 @@ save(LP_g_size_Levy_list_boot, LP_lg_size_Levy_list_boot , TFP_g_size_Levy_list_
 
 ## Industry class
 
-#  *non-neg
+# # LP conditional on sectors *non-neg
 LP_ind_non_neg_Levy_list_boot <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "NACE_CAT", var_ind = "LP", c_names = ind_name_table$ind_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 LP_ind_log_Levy_list_boot <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "NACE_CAT", var_ind = "log_LP", c_names = ind_name_table$ind_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
@@ -332,8 +365,7 @@ TFP_g_ind_Levy_list_boot <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num =
 save(LP_g_ind_Levy_list_boot, LP_lg_ind_Levy_list_boot, TFP_g_ind_Levy_list_boot, file = "Industry_Levy_list_boot_g.Rda")
 
 
-#### _sim
-#*non-neg
+#### simplified industry code:_sim *non-neg
 LP_ind_non_neg_Levy_list_boot_sim <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "ind_agg", var_ind = "LP", c_names = unique(ind_name_table$ind_agg), cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 LP_ind_log_Levy_list_boot_sim <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "ind_agg", var_ind = "log_LP", c_names = unique(ind_name_table$ind_agg),  cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
@@ -352,3 +384,16 @@ LP_lg_ind_Levy_list_boot_sim <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_n
 TFP_g_ind_Levy_list_boot_sim <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "ind_agg", var_ind = "TFP_g", c_names = unique(ind_name_table$ind_agg),  cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 save(LP_g_ind_Levy_list_boot_sim, LP_lg_ind_Levy_list_boot_sim, TFP_g_ind_Levy_list_boot_sim, file = "Industry_Levy_list_boot_g_sim.Rda")
+
+
+
+### TFP all (TFP_g revised)
+log_TFP_year_non_neg_Levy_list_boot <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "log_TFP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+
+TFP_g_year_Levy_list_boot <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "TFP_g", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+
+TFP_lg_year_Levy_list_boot <- fun_fit_levy_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "TFP_lg", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+
+save(log_TFP_year_non_neg_Levy_list_boot, TFP_g_year_Levy_list_boot,  TFP_lg_year_Levy_list_boot, file = "Year_TFP_Levy_list_boot_g.Rda")
+
+

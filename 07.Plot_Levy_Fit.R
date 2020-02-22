@@ -4,7 +4,7 @@
 if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
 pacman::p_load(colorspace,RColorBrewer, msir, scales, grDevices,dplyr)
 
-# loading of data
+# loading of fit results 
 load("Year_Levy_list_boot.Rda")
 load("Size_Levy_list_boot.Rda")
 load("Industry_Levy_list_boot.Rda")
@@ -20,6 +20,10 @@ load("Size_non_neg_Levy_list_boot.Rda")
 load("ind_non_neg_Levy_list_boot.Rda")
 load("ind_non_neg_Levy_list_boot_sim.Rda")
 
+load("Year_TFP_Levy_list_boot_g.Rda") # Nov 10
+load("Industry_Levy_list_boot_detail.Rda") # Nov 12
+
+# loading of data
 load("Labels.Rda")
 load("All_list_Cleaned_cut.Rda")
 
@@ -29,9 +33,10 @@ load("All_list_Cleaned_cut.Rda")
 
 ## 1.1. function
 
-euro <- dollar_format(prefix = "\u20ac", big.mark = ",")
+euro <- dollar_format(prefix = "\u20ac", big.mark = ",") # for euro symbol 
 
 
+## plot function: this is for supplementary document
 fun_plot_levy_fit <- function(pdf_name, title, dat_list, c_names, x_lab,  con_ind) {
 
 
@@ -54,7 +59,7 @@ fun_plot_levy_fit <- function(pdf_name, title, dat_list, c_names, x_lab,  con_in
 
     levy_soofi <- round(unlist(lapply(con_temp, function(x) x$levy_soofi)), 0)
 
-    if(sum(is.na(levy_soofi)) > 0 | sum(levy_soofi < 50) > 0 ){
+    if(sum(is.na(levy_soofi)) > 0 | sum(levy_soofi < 50) > 0 ){ # remove the distribution whose fit is lower than Soofi ID of 50 
       ok_ind <- which(is.na(levy_soofi) | levy_soofi< 50)
       con_temp <- con_temp[-ok_ind]
       c_uni <- c_uni[-ok_ind]
@@ -111,6 +116,7 @@ fun_plot_levy_fit <- function(pdf_name, title, dat_list, c_names, x_lab,  con_in
 
 
 ##
+## plot function that generates three distributions only: this is for the main text 
 fun_plot_levy_fit_three <- function(pdf_name, title, dat_list, c_names, x_lab,  con_ind) {
 
 
@@ -171,6 +177,17 @@ fun_plot_levy_fit_three <- function(pdf_name, title, dat_list, c_names, x_lab,  
       
       mtext(side = 1, text= paste(x_lab, sep = ""), line = 1.2, cex =  0.7)
       
+    }else if(x_lab == "LP_Growth (Log)"){
+      axis(1, at = round(seq(min(con_temp[[y]]$data_mid), max(con_temp[[y]]$data_mid), length.out = 6),0),  labels = round(seq(min(con_temp[[y]]$data_mid), max(con_temp[[y]]$data_mid), length.out = 6),0), lwd = 0.3, cex.axis = .9)
+      
+      mtext(side = 1, text= paste(x_lab, sep = ""), line = 1.2, cex =  0.7)
+      
+    }
+    else if(x_lab == "TFP (Log)" | x_lab == "TFP Growth (Log)"){
+      #axis(1, at = round(seq(min(con_temp[[y]]$data_mid), max(con_temp[[y]]$data_mid), length.out = 6),0),  labels = round(seq(min(con_temp[[y]]$data_mid), max(con_temp[[y]]$data_mid), length.out = 6),0), lwd = 0.3, cex.axis = .9)
+      axis(1, lwd = 0.3, cex.axis = .9)
+      mtext(side = 1, text= paste(x_lab, sep = ""), line = 1.2, cex =  0.7)
+      
     }else{
       axis(1, at = round(seq(min(con_temp[[y]]$data_mid), max(con_temp[[y]]$data_mid), length.out = 6),-2),  labels = round(seq(min(con_temp[[y]]$data_mid), max(con_temp[[y]]$data_mid), length.out = 6),-2), lwd = 0.3, cex.axis = .9)
       
@@ -196,7 +213,9 @@ fun_plot_levy_fit_three <- function(pdf_name, title, dat_list, c_names, x_lab,  
 }
 
 
+##### For supplementary materials: generate all plots 
 ### LP 
+
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP/Non-Log")
 
 fun_plot_levy_fit(pdf_name = "Figure_LP_Year_Levy_Fit_France", title = "", dat_list = LP_year_Levy_list_boot, c_names = year_names,  x_lab = "LP", con_ind = "France")
@@ -209,7 +228,7 @@ fun_plot_levy_fit(pdf_name = "Figure_LP_Year_Levy_Fit_Spain", title = "", dat_li
 
 fun_plot_levy_fit(pdf_name = "Figure_LP_Year_Levy_Fit_UK", title = "", dat_list = LP_year_Levy_list_boot, c_names = year_names,  x_lab = "LP",con_ind = "United Kingdom")
 
-#
+# LP without negative values
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP/Non-Log (Non-Neg)")
 
 fun_plot_levy_fit(pdf_name = "Figure_LP_year_non_neg_Levy_Fit_France", title = "", dat_list = LP_year_non_neg_Levy_list_boot, c_names = year_names,  x_lab = "LP ( > 0)", con_ind = "France")
@@ -222,7 +241,7 @@ fun_plot_levy_fit(pdf_name = "Figure_LP_year_non_neg_Levy_Fit_Spain", title = ""
 
 fun_plot_levy_fit(pdf_name = "Figure_LP_year_non_neg_Levy_Fit_UK", title = "", dat_list = LP_year_non_neg_Levy_list_boot, c_names = year_names,  x_lab = "LP ( > 0)",con_ind = "United Kingdom")
 
-#
+# Log LP
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP/Log")
 
 fun_plot_levy_fit(pdf_name = "Figure_LP_year_log_Levy_Fit_France", title = "", dat_list = LP_year_log_Levy_list_boot, c_names = year_names,  x_lab = "LP (log)", con_ind = "France")
@@ -236,7 +255,7 @@ fun_plot_levy_fit(pdf_name = "Figure_LP_year_log_Levy_Fit_Spain", title = "", da
 fun_plot_levy_fit(pdf_name = "Figure_LP_year_log_Levy_Fit_UK", title = "", dat_list = LP_year_log_Levy_list_boot, c_names = year_names,  x_lab = "LP (log)",con_ind = "United Kingdom")
 
 ### LP_Change and LP Growth (log and non-log)
-# Change 
+# LP Change 
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP Change/LP Change")
 fun_plot_levy_fit(pdf_name = "Figure_LP_Change_Year_Levy_Fit_France", title = "", dat_list = LP_Change_year_Levy_list_boot, c_names = year_names,  x_lab = "LP Change", con_ind = "France")
 
@@ -248,7 +267,7 @@ fun_plot_levy_fit(pdf_name = "Figure_LP_Change_Year_Levy_Fit_Spain", title = "",
 
 fun_plot_levy_fit(pdf_name = "Figure_LP_Change_Year_Levy_Fit_UK", title = "", dat_list = LP_Change_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Change",con_ind = "United Kingdom")
 
-# Change Non-Neg
+# LP Change Non-Neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP Change/LP Change (Non-Neg)")
 fun_plot_levy_fit(pdf_name = "Figure_LP_Change_non_neg_Year_Levy_Fit_France", title = "", dat_list = LP_Change_non_neg_year_Levy_list_boot, c_names = year_names,  x_lab = "LP Change", con_ind = "France")
 
@@ -260,7 +279,7 @@ fun_plot_levy_fit(pdf_name = "Figure_LP_Change_non_neg_Year_Levy_Fit_Spain", tit
 
 fun_plot_levy_fit(pdf_name = "Figure_LP_Change_non_neg_Year_Levy_Fit_UK", title = "", dat_list = LP_Change_non_neg_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Change",con_ind = "United Kingdom")
 
-# Growth
+# LP Growth
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP Growth/Non-Log")
 
 fun_plot_levy_fit(pdf_name = "Figure_LP_g_Year_Levy_Fit_France", title = "", dat_list = LP_g_year_Levy_list_boot, c_names = year_names,  x_lab = "LP Growth", con_ind = "France")
@@ -273,7 +292,7 @@ fun_plot_levy_fit(pdf_name = "Figure_LP_g_Year_Levy_Fit_Spain", title = "", dat_
 
 fun_plot_levy_fit(pdf_name = "Figure_LP_g_Year_Levy_Fit_UK", title = "", dat_list = LP_g_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Growth",con_ind = "United Kingdom")
  
-# Growth (Log)
+# LP Growth (Log)
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP Growth/Log")
 
 fun_plot_levy_fit(pdf_name = "Figure_LP_lg_Year_Levy_Fit_France", title = "", dat_list = LP_lg_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Growth", con_ind = "France")
@@ -285,9 +304,12 @@ fun_plot_levy_fit(pdf_name = "Figure_LP_lg_Year_Levy_Fit_Italy", title = "", dat
 fun_plot_levy_fit(pdf_name = "Figure_LP_lg_Year_Levy_Fit_Spain", title = "", dat_list = LP_lg_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Growth", con_ind = "Spain")
 
 fun_plot_levy_fit(pdf_name = "Figure_LP_lg_Year_Levy_Fit_UK", title = "", dat_list = LP_lg_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Growth",con_ind = "United Kingdom")
-# 
-# #########@# fun_plot_levy_fit_three
-# ### LP 
+
+
+
+
+##########@# fun_plot_levy_fit_three for the main text 
+#### LP 
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP/Non-Log")
 
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_Year_Levy_Fit_France", title = "", dat_list = LP_year_Levy_list_boot, c_names = year_names,  x_lab = "LP", con_ind = "France")
@@ -299,7 +321,8 @@ fun_plot_levy_fit_three(pdf_name = "Figure_LP_Year_Levy_Fit_Italy", title = "", 
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_Year_Levy_Fit_Spain", title = "", dat_list = LP_year_Levy_list_boot, c_names = year_names,  x_lab = "LP", con_ind = "Spain")
 
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_Year_Levy_Fit_UK", title = "", dat_list = LP_year_Levy_list_boot, c_names = year_names,  x_lab = "LP",con_ind = "United Kingdom")
-#
+
+# LP non neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP/Non-Log (Non-Neg)")
 
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_year_non_neg_Levy_Fit_France", title = "", dat_list = LP_year_non_neg_Levy_list_boot, c_names = year_names,  x_lab = "LP ( > 0)", con_ind = "France")
@@ -311,8 +334,8 @@ fun_plot_levy_fit_three(pdf_name = "Figure_LP_year_non_neg_Levy_Fit_Italy", titl
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_year_non_neg_Levy_Fit_Spain", title = "", dat_list = LP_year_non_neg_Levy_list_boot, c_names = year_names,  x_lab = "LP ( > 0)", con_ind = "Spain")
 
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_year_non_neg_Levy_Fit_UK", title = "", dat_list = LP_year_non_neg_Levy_list_boot, c_names = year_names,  x_lab = "LP ( > 0)",con_ind = "United Kingdom")
-
-#
+ 
+# log LP
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP/Log")
 
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_year_log_Levy_Fit_France", title = "", dat_list = LP_year_log_Levy_list_boot, c_names = year_names,  x_lab = "LP (log)", con_ind = "France")
@@ -326,7 +349,7 @@ fun_plot_levy_fit_three(pdf_name = "Figure_LP_year_log_Levy_Fit_Spain", title = 
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_year_log_Levy_Fit_UK", title = "", dat_list = LP_year_log_Levy_list_boot, c_names = year_names,  x_lab = "LP (log)",con_ind = "United Kingdom")
 
 ### LP_Change and LP Growth (log and non-log)
-# Change
+# LP Change
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP Change/LP Change")
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_Change_Year_Levy_Fit_France", title = "", dat_list = LP_Change_year_Levy_list_boot, c_names = year_names,  x_lab = "LP Change", con_ind = "France")
 
@@ -338,7 +361,7 @@ fun_plot_levy_fit_three(pdf_name = "Figure_LP_Change_Year_Levy_Fit_Spain", title
 
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_Change_Year_Levy_Fit_UK", title = "", dat_list = LP_Change_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Change",con_ind = "United Kingdom")
 
-# Change Non-Neg
+# LP Change Non-Neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP Change/LP Change (Non-Neg)")
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_Change_non_neg_Year_Levy_Fit_France", title = "", dat_list = LP_Change_non_neg_year_Levy_list_boot, c_names = year_names,  x_lab = "LP Change", con_ind = "France")
 
@@ -350,7 +373,7 @@ fun_plot_levy_fit_three(pdf_name = "Figure_LP_Change_non_neg_Year_Levy_Fit_Spain
 
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_Change_non_neg_Year_Levy_Fit_UK", title = "", dat_list = LP_Change_non_neg_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Change",con_ind = "United Kingdom")
 
-# Growth
+# LP Growth
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP Growth/Non-Log")
 
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_g_Year_Levy_Fit_France", title = "", dat_list = LP_g_year_Levy_list_boot, c_names = year_names,  x_lab = "LP Growth", con_ind = "France")
@@ -363,10 +386,10 @@ fun_plot_levy_fit_three(pdf_name = "Figure_LP_g_Year_Levy_Fit_Spain", title = ""
 
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_g_Year_Levy_Fit_UK", title = "", dat_list = LP_g_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Growth",con_ind = "United Kingdom")
 
-# Growth (Log)
+# LP Growth (Log)
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP Growth/Log")
 
-fun_plot_levy_fit_three(pdf_name = "Figure_LP_lg_Year_Levy_Fit_France", title = "", dat_list = LP_lg_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Growth", con_ind = "France")
+fun_plot_levy_fit_three(pdf_name = "Figure_LP_lg_Year_Levy_Fit_France", title = "", dat_list = LP_lg_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Growth (Log)", con_ind = "France")
 
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_lg_Year_Levy_Fit_Germany", title = "", dat_list = LP_lg_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Growth", con_ind = "Germany")
 
@@ -377,8 +400,14 @@ fun_plot_levy_fit_three(pdf_name = "Figure_LP_lg_Year_Levy_Fit_Spain", title = "
 fun_plot_levy_fit_three(pdf_name = "Figure_LP_lg_Year_Levy_Fit_UK", title = "", dat_list = LP_lg_year_Levy_list_boot, c_names = year_names,  x_lab = "LP_Growth",con_ind = "United Kingdom")
 
 
+# TFP
+fun_plot_levy_fit_three(pdf_name = "Figure_log_TFP_Year_Levy_Fit_France", title = "", dat_list = log_TFP_year_non_neg_Levy_list_boot, c_names = year_names,  x_lab = "TFP (Log)", con_ind = "France")
 
-#####
+# TFP growth
+fun_plot_levy_fit_three(pdf_name = "Figure_TFP_lg_Year_Levy_Fit_France", title = "", dat_list = TFP_lg_year_Levy_list_boot, c_names = year_names,  x_lab = "TFP Growth (Log)", con_ind = "France")
+
+
+##### same plot function for the size variables 
 
 fun_plot_levy_fit_size <- function(pdf_name, title, dat_list, c_names, x_lab,  con_ind) {
   color_ind <- c(brewer.pal(n = 8, name = "Dark2"), brewer.pal(n = 8, name = "Set3"), "grey", "blue", "green", "red")[1:length(c_names)] # color index 
@@ -426,6 +455,10 @@ fun_plot_levy_fit_size <- function(pdf_name, title, dat_list, c_names, x_lab,  c
     mtext(side = 1, text= paste(x_lab, sep = ""), line = 1.2, cex =  1)
   }else{
     axis(1, at = round(seq(min(con_temp[[1]]$data_mid), max(con_temp[[1]]$data_mid), length.out = 6),-2),  labels = round(seq(min(con_temp[[1]]$data_mid), max(con_temp[[1]]$data_mid), length.out = 6),-2), lwd = 0.3, cex.axis = .9)
+    
+    #axis(1, at = c(0,200,400, 600),  labels = c(0,200,400, 600), lwd = 0.3, cex.axis = .9)
+    #axis(1, at = c(-300,-200,-100,0,100, 200),  labels = c(-300,-200,-100,0,100, 200), lwd = 0.3, cex.axis = .9)
+    
     mtext(side = 1, text= paste(x_lab," (", euro(1000) ,"/Employee)", sep = ""), line = 1.2, cex =  1)
     
   }  #axis(side = 2, lwd = 0.3, cex.axis = .9)
@@ -468,7 +501,7 @@ fun_plot_levy_fit_size(pdf_name = "Figure_LP_Size_Levy_Fit_Spain", title = "", d
 
 fun_plot_levy_fit_size(pdf_name = "Figure_LP_Size_Levy_Fit_UK", title = "", dat_list = LP_size_Levy_list_boot, c_names = size_names_long,  x_lab = "LP",con_ind = "United Kingdom")
 
-#
+# LP non neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP/Non-Log (Non-Neg)")
 
 fun_plot_levy_fit_size(pdf_name = "Figure_LP_size_non_neg_Levy_Fit_France", title = "", dat_list = LP_size_non_neg_Levy_list_boot, c_names = size_names_long,  x_lab = "LP ( > 0)", con_ind = "France")
@@ -481,7 +514,7 @@ fun_plot_levy_fit_size(pdf_name = "Figure_LP_size_non_neg_Levy_Fit_Spain", title
 
 fun_plot_levy_fit_size(pdf_name = "Figure_LP_size_non_neg_Levy_Fit_UK", title = "", dat_list = LP_size_non_neg_Levy_list_boot, c_names = size_names_long,  x_lab = "LP ( > 0)",con_ind = "United Kingdom")
 
-#
+# Log LP
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP/Log")
 
 fun_plot_levy_fit_size(pdf_name = "Figure_LP_size_log_Levy_Fit_France", title = "", dat_list = LP_size_log_Levy_list_boot, c_names = size_names_long,  x_lab = "LP (log)", con_ind = "France")
@@ -495,7 +528,7 @@ fun_plot_levy_fit_size(pdf_name = "Figure_LP_size_log_Levy_Fit_Spain", title = "
 fun_plot_levy_fit_size(pdf_name = "Figure_LP_size_log_Levy_Fit_UK", title = "", dat_list = LP_size_log_Levy_list_boot, c_names = size_names_long,  x_lab = "LP (log)",con_ind = "United Kingdom")
 
 ### LP_Change and LP Growth (log and non-log)
-# Change 
+# LP Change 
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP Change/LP Change")
 fun_plot_levy_fit_size(pdf_name = "Figure_LP_Change_Size_Levy_Fit_France", title = "", dat_list = LP_Change_size_Levy_list_boot, c_names = size_names_long,  x_lab = "LP Change", con_ind = "France")
 
@@ -507,7 +540,7 @@ fun_plot_levy_fit_size(pdf_name = "Figure_LP_Change_Size_Levy_Fit_Spain", title 
 
 fun_plot_levy_fit_size(pdf_name = "Figure_LP_Change_Size_Levy_Fit_UK", title = "", dat_list = LP_Change_size_Levy_list_boot, c_names = size_names_long,  x_lab = "LP_Change",con_ind = "United Kingdom")
 
-# Change Non-Neg
+# LP Change Non-Neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP Change/LP Change (Non-Neg)")
 fun_plot_levy_fit_size(pdf_name = "Figure_LP_Change_non_neg_Size_Levy_Fit_France", title = "", dat_list = LP_Change_non_neg_size_Levy_list_boot, c_names = size_names_long,  x_lab = "LP Change", con_ind = "France")
 
@@ -519,7 +552,7 @@ fun_plot_levy_fit_size(pdf_name = "Figure_LP_Change_non_neg_Size_Levy_Fit_Spain"
 
 fun_plot_levy_fit_size(pdf_name = "Figure_LP_Change_non_neg_Size_Levy_Fit_UK", title = "", dat_list = LP_Change_non_neg_size_Levy_list_boot, c_names = size_names_long,  x_lab = "LP_Change",con_ind = "United Kingdom")
 
-# Growth
+# LP Growth
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP Growth/Non-Log")
 
 fun_plot_levy_fit_size(pdf_name = "Figure_LP_g_Size_Levy_Fit_France", title = "", dat_list = LP_g_size_Levy_list_boot, c_names = size_names_long,  x_lab = "LP Growth", con_ind = "France")
@@ -532,7 +565,7 @@ fun_plot_levy_fit_size(pdf_name = "Figure_LP_g_Size_Levy_Fit_Spain", title = "",
 
 fun_plot_levy_fit_size(pdf_name = "Figure_LP_g_Size_Levy_Fit_UK", title = "", dat_list = LP_g_size_Levy_list_boot, c_names = size_names_long,  x_lab = "LP_Growth",con_ind = "United Kingdom")
 
-# Growth (Log)
+# LP Growth (Log)
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP Growth/Log")
 
 fun_plot_levy_fit_size(pdf_name = "Figure_LP_lg_Size_Levy_Fit_France", title = "", dat_list = LP_lg_size_Levy_list_boot, c_names = size_names_long,  x_lab = "LP_Growth", con_ind = "France")
@@ -600,6 +633,8 @@ fun_plot_levy_fit_ind <- function(pdf_name, title, dat_list, c_names, x_lab,  co
     
   }else{
     axis(1, at = round(seq(min(con_temp[[1]]$data_mid), max(con_temp[[1]]$data_mid), length.out = 6),-2),  labels = round(seq(min(con_temp[[1]]$data_mid), max(con_temp[[1]]$data_mid), length.out = 6),-2), lwd = 0.3, cex.axis = .9)
+    #axis(1, at = c(-300,-200,-100,0,100, 200),  labels = c(-300,-200,-100,0,100, 200), lwd = 0.3, cex.axis = .9)
+    
     mtext(side = 1, text= paste(x_lab," (", euro(1000) ,"/Employee)", sep = ""), line = 1.2, cex =  1)
     
     
@@ -630,6 +665,7 @@ fun_plot_levy_fit_ind <- function(pdf_name, title, dat_list, c_names, x_lab,  co
 }
 
 
+## LP
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP/Non-Log")
 
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_Ind_Levy_Fit_France", title = "", dat_list = LP_ind_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP", con_ind = "France")
@@ -642,7 +678,7 @@ fun_plot_levy_fit_ind(pdf_name = "Figure_LP_Ind_Levy_Fit_Spain", title = "", dat
 
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_Ind_Levy_Fit_UK", title = "", dat_list = LP_ind_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP",con_ind = "United Kingdom")
 
-#
+# LP non neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP/Non-Log (Non-Neg)")
 
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_ind_non_neg_Levy_Fit_France", title = "", dat_list = LP_ind_non_neg_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP ( > 0)", con_ind = "France")
@@ -655,7 +691,7 @@ fun_plot_levy_fit_ind(pdf_name = "Figure_LP_ind_non_neg_Levy_Fit_Spain", title =
 
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_ind_non_neg_Levy_Fit_UK", title = "", dat_list = LP_ind_non_neg_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP ( > 0)",con_ind = "United Kingdom")
 
-#
+# Log LP
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP/Log")
 
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_ind_log_Levy_Fit_France", title = "", dat_list = LP_ind_log_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP (log)", con_ind = "France")
@@ -668,8 +704,9 @@ fun_plot_levy_fit_ind(pdf_name = "Figure_LP_ind_log_Levy_Fit_Spain", title = "",
 
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_ind_log_Levy_Fit_UK", title = "", dat_list = LP_ind_log_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP (log)",con_ind = "United Kingdom")
 
+
 ### LP_Change and LP Growth (log and non-log)
-# Change 
+# LP Change 
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP Change/LP Change")
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_Change_Ind_Levy_Fit_France", title = "", dat_list = LP_Change_ind_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP Change", con_ind = "France")
 
@@ -681,7 +718,7 @@ fun_plot_levy_fit_ind(pdf_name = "Figure_LP_Change_Ind_Levy_Fit_Spain", title = 
 
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_Change_Ind_Levy_Fit_UK", title = "", dat_list = LP_Change_ind_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP_Change",con_ind = "United Kingdom")
 
-# Change Non-Neg
+# LP Change Non-Neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP Change/LP Change (Non-Neg)")
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_Change_non_neg_Ind_Levy_Fit_France", title = "", dat_list = LP_Change_non_neg_ind_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP Change", con_ind = "France")
 
@@ -693,7 +730,7 @@ fun_plot_levy_fit_ind(pdf_name = "Figure_LP_Change_non_neg_Ind_Levy_Fit_Spain", 
 
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_Change_non_neg_Ind_Levy_Fit_UK", title = "", dat_list = LP_Change_non_neg_ind_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP_Change",con_ind = "United Kingdom")
 
-# Growth
+# LP Growth
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP Growth/Non-Log")
 
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_g_Ind_Levy_Fit_France", title = "", dat_list = LP_g_ind_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP Growth", con_ind = "France")
@@ -706,7 +743,7 @@ fun_plot_levy_fit_ind(pdf_name = "Figure_LP_g_Ind_Levy_Fit_Spain", title = "", d
 
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_g_Ind_Levy_Fit_UK", title = "", dat_list = LP_g_ind_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP_Growth",con_ind = "United Kingdom")
 
-# Growth (Log)
+# LP Growth (Log)
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP Growth/Log")
 
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_lg_Ind_Levy_Fit_France", title = "", dat_list = LP_lg_ind_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP_Growth", con_ind = "France")
@@ -720,14 +757,83 @@ fun_plot_levy_fit_ind(pdf_name = "Figure_LP_lg_Ind_Levy_Fit_Spain", title = "", 
 fun_plot_levy_fit_ind(pdf_name = "Figure_LP_lg_Ind_Levy_Fit_UK", title = "", dat_list = LP_lg_ind_Levy_list_boot, c_names = ind_name_table$ind_names,  x_lab = "LP_Growth",con_ind = "United Kingdom")
 
 
+###### parameter comparisons for different industry classifications 
+
+which(country_names%in%country_names_five)
+
+para_compare_ind <- function(k, par_ind, x_lab, leg_pos, var_type){
+  if(var_type == "level"){
+    detail_dat <- LP_ind_Levy_list_boot_detail[[1]][[k]]
+    coarse_dat <- LP_ind_Levy_list_boot[[1]][[k]]
+  }else{
+    detail_dat <- LP_Change_ind_Levy_list_boot_detail[[1]][[k]]
+    coarse_dat <- LP_Change_ind_Levy_list_boot[[1]][[k]]
+    
+  }
+  
+  remove_this <- which(unlist(lapply(detail_dat, function(x) x$levy_soofi)) < 90) # remove soofi below 90 for a better visualization 
+  
+  if(length(remove_this) > 0){
+    par_detail <- unlist(lapply(detail_dat, function(x) x$levy_para[par_ind]))[-remove_this]
+  }else{
+    par_detail <- unlist(lapply(detail_dat, function(x) x$levy_para[par_ind]))
+  }
+  
+  par_coarse <- unlist(lapply(coarse_dat, function(x) x$levy_para[par_ind]))
+  
+  par_all <- c(par_detail, par_coarse)
+  
+  den_coarse <- density(par_coarse)
+  den_detail <- density(par_detail)
+  
+  y_min <- min(den_coarse$y, den_detail$y)
+  y_max <- max(den_coarse$y, den_detail$y)
+  
+  x_min <- min(den_coarse$x, den_detail$x)
+  x_max <- max(den_coarse$x, den_detail$x)
+  
+  x_lab <- c(expression(alpha), expression(beta), expression(gamma), expression(delta))
+  
+  plot(density(par_coarse), type = "l",  bty = "n", yaxt = "n", xaxt = "n",  ylab = "density", main = x_lab[par_ind],  xlab = paste("Estimated Parameters"), ylim = c(y_min, y_max), xlim = c(x_min, x_max), cex.lab = 0.9, cex.main = 1.3)
+  box(lwd = 0.3)
+  axis(side = 1, lwd = 0.3, cex.axis=0.8)
+  axis(side = 2, lwd = 0.3, cex.axis=0.8)
+  
+  polygon(density(par_coarse), col = rgb(166/256, 1/256, 1/256, 0.6), border = rgb(166/256, 1/256, 1/256, 0.6))
+  lines(density(par_detail))
+  polygon(density(par_detail), col = rgb(1/256, 166/256, 1/256, 0.6), border = rgb(1/256, 166/256, 1/256, 0.6))
+  
+  if(leg_pos ==1){
+    legend("topleft", legend = c("1-digit", "4-digit"), col = c(rgb(166/256, 1/256, 1/256, 0.6),  rgb(1/256, 166/256, 1/256, 0.6)), lty=1, lwd = 4,cex=1, box.lty=0)
+    
+  }
+    
+}
+
+pdf(paste("Para_ind_comparison.pdf", sep = ""), height = 6., width = 8)
+par(mfrow = c(2, 2), mar = c(3, 2.7, 1.5, 1), mgp = c(1.7, .4, 0), tck = -.01, oma = c(0, 0, 1, 0), las = 1)
+
+para_compare_ind(k = 5, par_ind = 1, leg_pos = 1, var_type = "level")
+para_compare_ind(k = 5, par_ind = 2, leg_pos = 0, var_type = "level")
+para_compare_ind(k = 5, par_ind = 3, leg_pos = 0, var_type = "level")
+para_compare_ind(k = 5, par_ind = 4, leg_pos = 0, var_type = "level")
+
+dev.off()
 
 
+pdf(paste("Para_ind_comparison_change.pdf", sep = ""), height = 6., width = 8)
+par(mfrow = c(2, 2), mar = c(3, 2.7, 1.5, 1), mgp = c(1.7, .4, 0), tck = -.01, oma = c(0, 0, 1, 0), las = 1)
 
-###
+para_compare_ind(k = 5, par_ind = 1, leg_pos = 1, var_type = "change")
+para_compare_ind(k = 5, par_ind = 2, leg_pos = 0, var_type = "change")
+para_compare_ind(k = 5, par_ind = 3, leg_pos = 0, var_type = "change")
+para_compare_ind(k = 5, par_ind = 4, leg_pos = 0, var_type = "change")
+
+dev.off()
+
+
 
 ############ 2. Plots for Estimated parameters ############
-
-
 ## 2.1 function (for five countries )
 
 fun_levy_par <- function(pdf_name, title, dat_list, x_value, x_value_name, x_lab, leg_pos, leg_ind) { # this function has 7 arguments. 1) the name of the pdf file, 2) the title of the figure, 3) the data file that is generated from the fun_fit_levy function in "Fitting_Levy_Boot.R" script, 4) all class names, 5) unique class name for each subsample, 6) the name of x label, 7) the position of the legend
@@ -775,8 +881,7 @@ fun_levy_par <- function(pdf_name, title, dat_list, x_value, x_value_name, x_lab
   ylab_list <- list(expression(paste(alpha)), expression(paste(beta)), expression(paste(gamma)), expression(paste(delta))) ## for the y_lab
 
   # lw_list <- list(lw_par_a, lw_par_b, lw_par_g, lw_par_d)
-
-
+  
   ###
   pdf(paste(pdf_name, ".pdf", sep = ""), height = 5., width = 8)
   par(mfrow = c(2, 2), mar = c(3, 2.2, 1, 1), mgp = c(1.2, .3, 0), tck = -.01, oma = c(0, 0, 2, 0), las = 1)
@@ -813,7 +918,6 @@ fun_levy_par <- function(pdf_name, title, dat_list, x_value, x_value_name, x_lab
 
       polygon(x = polygon.x, y = polygon.y, col = adjustcolor(colores_this[which(five_ind%in%k)], alpha.f = 0.4), border = NA)
     }
-    
 
   }
   if(leg_ind == 1){
@@ -827,83 +931,6 @@ fun_levy_par <- function(pdf_name, title, dat_list, x_value, x_value_name, x_lab
 }
 
 
-# fun_levy_par_alpha <- function(pdf_name, title, dat_list, x_value, x_value_name, x_lab, leg_pos, leg_ind) { # this function has 7 arguments. 1) the name of the pdf file, 2) the title of the figure, 3) the data file that is generated from the fun_fit_levy function in "Fitting_Levy_Boot.R" script, 4) all class names, 5) unique class name for each subsample, 6) the name of x label, 7) the position of the legend
-#   
-#   colores_this <- c(brewer.pal(n = 7, name = "Set1"), brewer.pal(n = 7, name = "Set3"))
-#   
-#   
-#   
-#   five_ind <- which(country_names %in% country_names_five) # index for the top five countries
-#   
-#   
-#   c_uni_list <- list(); levy_par <- list(); levy_par_sd <- list()
-#   for (k in five_ind) {
-#     c_uni_list[[k]] <- dat_list[[3]][[k]] # the numeric value of the unique class
-#     levy_par[[k]] <- lapply(dat_list[[1]][[k]], function(x) x$levy_para) # the corresponding levy parameters for each class
-#     levy_par_sd[[k]] <- lapply(dat_list[[1]][[k]], function(x) apply(x$est_levy_std_error$t, 2, sd)) # the corresponding standard deviation of levy parameters for each class
-#   }
-#   
-#   par_a <- list(); par_a_sd <- list()
-#   par_b <- list(); par_b_sd <- list()
-#   par_g <- list(); par_g_sd <- list()
-#   par_d <- list(); par_d_sd <- list()
-#   
-#   for (k in five_ind) {
-#     par_a[[k]] <- unlist(lapply(levy_par[[k]], function(x) x[1])) # parameter \alpha
-#     par_a_sd[[k]] <- unlist(lapply(levy_par_sd[[k]], function(x) x[1])) # sd of parameter \alpha
-#     par_b[[k]] <- unlist(lapply(levy_par[[k]], function(x) x[2])) # parameter \beta
-#     par_b_sd[[k]] <- unlist(lapply(levy_par_sd[[k]], function(x) x[2]))
-#     par_g[[k]] <- unlist(lapply(levy_par[[k]], function(x) x[3])) # parameter \gamma
-#     par_g_sd[[k]] <- unlist(lapply(levy_par_sd[[k]], function(x) x[3]))
-#     par_d[[k]] <- unlist(lapply(levy_par[[k]], function(x) x[4])) # parameter \delta
-#     par_d_sd[[k]] <- unlist(lapply(levy_par_sd[[k]], function(x) x[4]))
-#   }
-#   
-#   
-#   par_list <- list(par_a, par_b, par_g, par_d)
-#   par_sd_list <- list(par_a_sd, par_b_sd, par_g_sd, par_d_sd)
-#   # parameter names
-#   par_name_list <- list(
-#     expression(paste(alpha, ": TFP Growth")),
-#     expression(paste(beta, ": skewness")),
-#     expression(paste(gamma, ": scale")),
-#     expression(paste(delta, ": location"))
-#   )
-#   ylab_list <- list(expression(paste(alpha)), expression(paste(beta)), expression(paste(gamma)), expression(paste(delta))) ## for the y_lab
-#   
-#   # lw_list <- list(lw_par_a, lw_par_b, lw_par_g, lw_par_d)
-#   
-#   
-#   ###
-#   pdf(paste(pdf_name, ".pdf", sep = ""), height = 5, width = 7)
-#   par(mfrow = c(1, 1), mar = c(3, 2.2, 1.3, 1), mgp = c(1.4, .3, 0), tck = -.01, oma = c(0, 0, 1, 0), las = 1)
-#   
-#   l <- 1 # first parameter
-#   plot(x_value, x_value, yaxt = "n", xaxt = "n", main = par_name_list[[l]], cex.main = 1.6, xlab = x_lab, ylab = ylab_list[[l]], cex.lab = 1., cex = 0, ylim = c(min(unlist(par_list[[l]]) - unlist(par_sd_list[[l]])), max(unlist(par_list[[l]]) + unlist(par_sd_list[[l]])) * 1.0)) # Empty plot for the first parameter: x_value is the numeric value of all classes
-#   # mtext(side = 1, text=paste0(x_lab), line = 1, cex = 0.7)
-#   
-#   axis(side = 1, at = x_value, label = x_value_name, lwd = 0.3, cex.axis = 0.85) # x-axis
-#   axis(side = 2, lwd = 0.3, cex.axis = 0.85) # y-axis
-#   
-#   
-#   for (k in five_ind) {
-#     points(c_uni_list[[k]], par_list[[l]][[k]], col = colores_this[which(five_ind%in%k)], cex = 0.9, pch = 20, type = "b", lty = 1, lwd = 1.3) # c_uni_list is the numeric value of the unique classes in the subsample
-#     
-#     polygon.x <- c(c_uni_list[[k]], rev(c_uni_list[[k]])) # error bar
-#     polygon.y <- c(c(par_list[[l]][[k]] - par_sd_list[[l]][[k]]), rev(c(par_list[[l]][[k]] + par_sd_list[[l]][[k]])))
-#     
-#     polygon(x = polygon.x, y = polygon.y, col = adjustcolor(colores_this[which(five_ind%in%k)], alpha.f = 0.4), border = NA)
-#   }
-# 
-#   if(leg_ind == 1){
-#     legend("topright", legend = c("FRA", "GER", "ITA", "SPA", "UK"), col = colores_this[1:5], pch = rep(20, 5), bty = "n", xpd = NA, cex = 1.1, ncol = 1, horiz = T, pt.cex = 2.4)
-#     
-#   }
-#   # legend outside the main plots
-#   
-#   #mtext(paste(title), side = 3, line = 1, outer = TRUE, cex = 1.2)
-#   dev.off()
-# }
 ## 2.1.2 plot
 
 ## Estimated Parameter for Year class
@@ -911,7 +938,7 @@ fun_levy_par <- function(pdf_name, title, dat_list, x_value, x_value_name, x_lab
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Year)/LP/Non-Log")
 fun_levy_par(pdf_name = "Figure_Levy_Para_LP_Year", title = "Labor Productivity", dat_list = LP_year_Levy_list_boot, x_value = 1:10, x_value_name = year_names, x_lab = "Year", leg_pos = "topleft", leg_ind = 1)
 
-# uncut
+# LP uncut
 fun_levy_par(pdf_name = "Figure_Levy_Para_LP_Year_uncut", title = "Labor Productivity", dat_list = LP_year_Levy_list_boot_uncut, x_value = 1:10, x_value_name = year_names, x_lab = "Year", leg_pos = "topleft", leg_ind = 1)
 
 
@@ -939,35 +966,39 @@ fun_levy_par(pdf_name = "Figure_Levy_Para_LP_lg_Year", title = "Labor Productivi
 #fun_levy_par(pdf_name = "Figure_Levy_Para_TFP_g_Year_neg_ind", title = "TFP Growth", dat_list = TFP_g_year_Levy_list_boot, x_value = 2:10, x_value_name = year_names[-c(1)], x_lab = "Year", leg_pos = "bottomright", leg_ind = 1)
 
 
-# LP_Change alpha
-# fun_levy_par_alpha(pdf_name = "Figure_Levy_alpha_LP_g_Year", title = "Labor Productivity Growth", dat_list = LP_g_year_Levy_list_boot, x_value = 2:10, x_value_name = year_names[-c(1)], x_lab = "Year", leg_pos = "bottomright", leg_ind = 1)
-# 
-# fun_levy_par_alpha(pdf_name = "Figure_Levy_alpha_TFP_g_Year", title = "TFP Growth", dat_list = TFP_g_year_Levy_list_boot, x_value = 2:10, x_value_name = year_names[-c(1)], x_lab = "Year", leg_pos = "bottomright", leg_ind = 1)
+# TFP 
+fun_levy_par(pdf_name = "Figure_Levy_Para_Log_TFP_Year", title = "TFP (Log)", dat_list = log_TFP_year_non_neg_Levy_list_boot, x_value = 1:10, x_value_name = year_names, x_lab = "Year", leg_pos = "topleft", leg_ind = 1)
+
+
+fun_levy_par(pdf_name = "Figure_Levy_Para_Log_TFP_Growth_Year", title = "TFP Growth (Log)", dat_list = TFP_lg_year_Levy_list_boot, x_value = 2:10, x_value_name = year_names[-c(1)], x_lab = "Year", leg_pos = "bottomright", leg_ind = 1)
 
 
 ## Estimated Parameter for Size class
-
-# LP
+# #LP
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP/Non-Log")
 fun_levy_par(pdf_name = "Figure_Levy_Para_LP_Size", title = "Labor Productivity", dat_list = LP_size_Levy_list_boot, x_value = c(1:4), x_value_name = size_names, x_lab = "Size", leg_pos = "topright", leg_ind = 1)
 
+## LP non neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP/Non-Log (Non-Neg)")
 fun_levy_par(pdf_name = "Figure_Levy_Para_LP_Size_non_neg", title = "Labor Productivity", dat_list = LP_size_non_neg_Levy_list_boot, x_value = c(1:4), x_value_name = size_names, x_lab = "Size", leg_pos = "topright", leg_ind = 1)
 
+## LP log
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP/Log")
 fun_levy_par(pdf_name = "Figure_Levy_log_Para_LP_Size", title = "Labor Productivity", dat_list = LP_size_log_Levy_list_boot, x_value = c(1:4), x_value_name = size_names, x_lab = "Size", leg_pos = "topright", leg_ind = 1)
 
-# LP_Change
+## LP_Change
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP Change/LP Change")
 fun_levy_par(pdf_name = "Figure_Levy_Para_LP_Change_Size", title = "Labor Productivity Change", dat_list = LP_Change_size_Levy_list_boot, x_value = c(1:4), x_value_name = size_names, x_lab = "Size", leg_pos = "bottomright", leg_ind = 1)
-
-
+ 
+## LP_Change non neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP Change/LP Change (Non-Neg)")
 fun_levy_par(pdf_name = "Figure_Levy_non_neg_Para_LP_Change_Size", title = "Labor Productivity Change", dat_list = LP_Change_non_neg_size_Levy_list_boot, x_value = c(1:4), x_value_name = size_names, x_lab = "Size", leg_pos = "bottomright", leg_ind = 1)
 
+## LP_Growth 
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP Growth/Non-Log")
 fun_levy_par(pdf_name = "Figure_Levy_Para_LP_g_Size", title = "Labor Productivity Growth", dat_list = LP_g_size_Levy_list_boot, x_value = c(1:4), x_value_name = size_names, x_lab = "Year", leg_pos = "bottomright", leg_ind = 1)
 
+## Log LP_Growth 
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Size)/LP Growth/Log")
 fun_levy_par(pdf_name = "Figure_Levy_Para_LP_lg_Size", title = "Labor Productivity Growth", dat_list = LP_lg_size_Levy_list_boot, x_value = c(1:4), x_value_name = size_names, x_lab = "Year", leg_pos = "bottomright", leg_ind = 1)
 
@@ -1146,9 +1177,11 @@ fun_levy_par_ind <- function(pdf_name, title, dat_list, y_value, y_value_name, l
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP/Non-Log")
 fun_levy_par_ind(pdf_name = "Figure_Levy_Para_LP_Ind", title = "Labor Productivity", dat_list = LP_ind_Levy_list_boot,  y_value = c(1:19), y_value_name = ind_name_table$ind_names_short , leg_pos = "topleft")
 
+# LP non neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP/Non-Log (Non-Neg)")
 fun_levy_par_ind(pdf_name = "Figure_Levy_Para_LP_ind_non_neg", title = "Labor Productivity", dat_list = LP_ind_non_neg_Levy_list_boot, y_value = c(1:19), y_value_name = ind_name_table$ind_names_short , leg_pos = "topleft")
 
+# Log LP 
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP/Log")
 fun_levy_par_ind(pdf_name = "Figure_Levy_log_Para_LP_Ind", title = "Labor Productivity", dat_list = LP_ind_log_Levy_list_boot, y_value = c(1:19), y_value_name = ind_name_table$ind_names_short , leg_pos = "topleft")
 
@@ -1156,12 +1189,15 @@ fun_levy_par_ind(pdf_name = "Figure_Levy_log_Para_LP_Ind", title = "Labor Produc
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP Change/LP Change")
 fun_levy_par_ind(pdf_name = "Figure_Levy_Para_LP_Change_Ind", title = "Labor Productivity Change", dat_list = LP_Change_ind_Levy_list_boot,  y_value = c(1:19), y_value_name = ind_name_table$ind_names_short , leg_pos = "topleft")
 
+# LP_Change non neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP Change/LP Change (Non-Neg)")
 fun_levy_par_ind(pdf_name = "Figure_Levy_non_neg_Para_LP_Change_Ind", title = "Labor Productivity Change", dat_list = LP_Change_non_neg_ind_Levy_list_boot,  y_value = c(1:19), y_value_name = ind_name_table$ind_names_short , leg_pos = "topleft")
 
+# LP_Growth
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP Growth/Non-Log")
 fun_levy_par_ind(pdf_name = "Figure_Levy_Para_LP_g_Ind", title = "Labor Productivity Growth", dat_list = LP_g_ind_Levy_list_boot, y_value = c(1:19), y_value_name = ind_name_table$ind_names_short , leg_pos = "topleft")
 
+# LP_Growth (Log)
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP Growth/Log")
 fun_levy_par_ind(pdf_name = "Figure_Levy_Para_LP_lg_Ind", title = "Labor Productivity Growth", dat_list = LP_lg_ind_Levy_list_boot, y_value = c(1:19), y_value_name = ind_name_table$ind_names_short , leg_pos = "topleft")
 
@@ -1364,11 +1400,11 @@ fun_levy_par_ind_sim <- function(pdf_name, title, dat_list, y_value, y_value_nam
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP/Non-Log")
 fun_levy_par_ind_sim(pdf_name = "Figure_Levy_Para_LP_Ind_sim", title = "Labor Productivity", dat_list = LP_ind_Levy_list_boot_sim,  y_value = c(1:19), y_value_name = unique(ind_name_table$ind_agg), leg_pos = "topleft")
 
-#
+# LP non neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP/Non-Log (Non-Neg)")
 fun_levy_par_ind_sim(pdf_name = "Figure_Levy_Para_LP_ind_non_neg_sim", title = "Labor Productivity", dat_list = LP_ind_non_neg_Levy_list_boot_sim, y_value = c(1:19), y_value_name = unique(ind_name_table$ind_agg) , leg_pos = "topleft")
 
-#
+# Log LP 
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP/Log")
 fun_levy_par_ind_sim(pdf_name = "Figure_Levy_log_Para_LP_Ind_sim", title = "Labor Productivity", dat_list = LP_ind_log_Levy_list_boot_sim, y_value = c(1:19), y_value_name = unique(ind_name_table$ind_agg)  , leg_pos = "topleft")
 
@@ -1376,20 +1412,20 @@ fun_levy_par_ind_sim(pdf_name = "Figure_Levy_log_Para_LP_Ind_sim", title = "Labo
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP Change/LP Change")
 fun_levy_par_ind_sim(pdf_name = "Figure_Levy_Para_LP_Change_Ind_sim", title = "Labor Productivity Change", dat_list = LP_Change_ind_Levy_list_boot_sim,  y_value = c(1:19), y_value_name = unique(ind_name_table$ind_agg), leg_pos = "topleft")
 
-#
+# LP_Change non neg
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP Change/LP Change (Non-Neg)")
 fun_levy_par_ind_sim(pdf_name = "Figure_Levy_non_neg_Para_LP_Change_Ind_sim", title = "Labor Productivity Change", dat_list = LP_Change_non_neg_ind_Levy_list_boot_sim,  y_value = c(1:19), y_value_name = unique(ind_name_table$ind_agg), leg_pos = "topleft")
 
-#
+# LP_Growth
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP Growth/Non-Log")
 fun_levy_par_ind_sim(pdf_name = "Figure_Levy_Para_LP_g_Ind_sim", title = "Labor Productivity Growth", dat_list = LP_g_ind_Levy_list_boot_sim, y_value = c(1:19), y_value_name = unique(ind_name_table$ind_agg), leg_pos = "topleft")
 
-#
+# Log LP_Growth
 setwd("~/Desktop/Cleaned Rda/Productivity/Figure Final (Sector)/LP Growth/Log")
 fun_levy_par_ind_sim(pdf_name = "Figure_Levy_Para_LP_lg_Ind_sim", title = "Labor Productivity Growth", dat_list = LP_lg_ind_Levy_list_boot_sim, y_value = c(1:19), y_value_name =unique(ind_name_table$ind_agg), leg_pos = "topleft")
 
-######
 
+###### Scatterplot of estiamted parameters and capital intensity
 
 fun_levy_par_ind_scatter <- function(pdf_name, title, dat_list, y_value, y_value_name, leg_pos) { # # this function has 7 arguments. 1) the name of the pdf file, 2) the title of the figure, 3) the data file that is generated from the fun_fit_levy function in "Fitting_Levy_Boot.R" script, 4) all class names, 5) unique class name for each subsample, 6) the name of x label, 7) the position of the legend
   
@@ -1496,6 +1532,19 @@ fun_levy_par_ind_scatter <- function(pdf_name, title, dat_list, y_value, y_value
   axis(side = 2,lwd = 0.3, cex.axis=0.8)
   mtext(side = 1, text= paste("Capital Intensity"," (", euro(1000) ,"/Employee)", sep = ""), line = 1.8, cex =  1)
   
+  COE <- summary(lm(ok_frame$alpha~log(ok_frame$CAP_agg/1000)))$coef[,1]
+  xx <- seq(0,10000,1)
+  theo <- COE[1]+COE[2]*log(xx)
+  lines(theo ~ xx)
+   
+  r2 <- summary(lm(ok_frame$alpha~log(ok_frame$CAP_agg/1000)))$adj.r.squared
+  r2_label <- bquote(italic(R)^2 == .(format(r2, digits = 2)))
+  legend("topright", bty="n", legend = r2_label)
+  
+  # 
+  # legend("topright", bty="n", legend = mylabel)
+  # 
+  
   # fit <- lm(ok_frame$alpha~ok_frame$CAP_agg)
   # x_seq <- seq(min(ok_frame$CAP_agg), max(ok_frame$CAP_agg), length.out = 1000)
   # y_pred <- fit$coefficients[1] + fit$coefficients[2]*  x_seq 
@@ -1515,6 +1564,16 @@ fun_levy_par_ind_scatter <- function(pdf_name, title, dat_list, y_value, y_value
   axis(side = 2,lwd = 0.3, cex.axis=0.8)
   mtext(side = 1, text= paste("Capital Intensity"," (", euro(1000) ,"/Employee)", sep = ""), line = 1.8, cex =  1)
   
+  COE <- summary(lm(ok_frame$gamma ~ log(ok_frame$CAP_agg/1000)))$coef[,1]
+  xx <- seq(0,10000,1)
+  theo <- COE[1]+COE[2]*log(xx)
+  lines(theo ~ xx)
+  
+  r2 <- summary(lm(ok_frame$gamma ~ log(ok_frame$CAP_agg/1000)))$adj.r.squared
+  r2_label <- bquote(italic(R)^2 == .(format(r2, digits = 2)))
+  legend("topright", bty="n", legend = r2_label)
+  
+  
   # fit <- lm(ok_frame$gamma~ok_frame$CAP_log_agg)
   # abline(fit, lwd = 1.5) # regression line
   # r2 <- summary(fit)$adj.r.squared
@@ -1533,108 +1592,194 @@ fun_levy_par_ind_scatter(pdf_name = "Figure_Capital_Intesity", title = "Labor Pr
 
 #### PP plot
 
+# neg_cut <- 0.0025 # negative cut-off point
+# pov_cut <- 0.9975 # positive cut-off point
+# 
+# levy_pp_plot <- function(dat, cond_ind, var_ind, c_names, cut_num, neg_cut, pov_cut, pdf_name, log_ind) { # the function takes 8 arguments: 1) data generated and cleaned in section 0.2, 2) the number of bins, 3) the index of the variable that is used for the conditional class, 4) the target variable name, 5) the name of class, 6) the minimum number of observations for each class,  7) the cutting point on the left tail, 8) the cutting point on the right tail
+#   result_list <- list()
+#   
+#   c_uni_list <- list()
+#   c_uni_num_list <- list()
+#   
+#    #length(dat)
+#   for (k in 1:length(dat)) {
+#     print(k)
+#     
+#     zz <- dat[[k]] %>%
+#       select(IDNR, Year, COMPCAT, NACE_CAT, LP, LP_diff, EMPL) %>% # Firm ID, Year, Firm Size, Industry ID, Labor Produtivity, Labor Productivity Change, Employment
+#       filter(EMPL > 1) %>% # remove self-employed persons
+#       mutate(LP = LP / 1000) %>% # change the unit scale of the labor productivity by dividing it by 1000
+#       mutate(LP_diff = LP_diff / 1000) # percentage unit for the growth variables
+#     
+#     zz <- as.data.frame(zz)
+#     
+#     zz$Cond <- zz[, cond_ind] # create a new column of the class variable
+#     zz$Var <- zz[, var_ind] # create a new column of the value variable
+#     
+#     
+#     zz <- zz %>%
+#       select(IDNR, Year, Var, Cond) %>%
+#       na.omit() %>%
+#       filter(Var > quantile(Var, neg_cut) & Var < quantile(Var, pov_cut)) %>% # cut the tail
+#       group_by(Cond) %>%
+#       filter(length(IDNR) > cut_num) # set the minimum number of obs for each class
+#     
+#     
+#     if (nrow(zz) == 0) {
+#       plot(1,1, yaxt = "n", xaxt = "n", main = "", cex.main = 1.2, xlab = "", ylab = "", cex = 0) 
+#       
+#     } else {
+#       c_uni <- unique(zz$Cond) # unique class 
+#       
+#       c_uni_name <- c()
+#       c_uni_num <- c() 
+#       
+#       for (i in 1:length(c_uni)) {
+#         c_uni_num[i] <- which(c_names %in% c_uni[i])
+#       }
+#       
+#       c_uni_num <- sort(c_uni_num)
+#       c_uni_name <- c_names[c_uni_num] # record the class names
+#       
+#       c_list <- list()
+#       #length(c_uni_name)
+#       pdf(paste(pdf_name, "_",country_names[k], ".pdf", sep = ""), height = 10, width = 7.)
+#       par(mfrow = c(4, 3), mar = c(3, 2.7, 1, 1), mgp = c(1.3, .3, 0), tck = -.01, oma = c(0, 0, 2, 0))
+#       
+#       for (c in 1:length(c_uni_name)) {
+#         print(paste(length(c_uni), c))
+#         
+#         c_lp <- zz$Var[zz$Cond == c_uni_name[c]] # for each class
+#         
+#         if(log_ind == 1){
+#           c_lp <- log(c_lp[c_lp > 0])
+#         }else{
+#           c_lp <- c_lp
+#         }
+#         
+#         levy_result <- levy_fitting(dat_t = c_lp, bin_num = 100, include_bootstrap=FALSE) # Levy estimation
+#         
+#         est_levy <- levy_result$levy_para
+#         
+#         if(est_levy[1] == 0.5 | est_levy[2] == 0| est_levy[3] == 1 | est_levy[4] == 0){
+#           plot(1,1, yaxt = "n", xaxt = "n", xlab = "Stable Fit (CDF)", ylab = "Data (CDF)", main = paste(country_names[k],":",c_uni_name[c], sep = ""), cex = 0, cex.main = 0.9)
+#           
+#         } else{
+#           c_lp_sort <- sort(c_lp, decreasing = F)
+#           model_cdf <- pstable(c_lp_sort , alpha = est_levy[1], beta = est_levy[2], gamma = est_levy[3], delta = est_levy[4])
+#           data_cdf <- ecdf(c_lp)
+#           
+#           
+#           plot(model_cdf, data_cdf(c_lp_sort), cex = 0.2, yaxt = "n", xaxt = "n", xlab = "Stable Fit (CDF)", ylab = "Data (CDF)", main = paste(country_names[k],":",c_uni_name[c], sep = ""), cex.main = 0.9)
+#           
+#           axis(side = 2,lwd = 0.3, cex.axis = 1)
+#           axis(side = 1, lwd = 0.3, cex.axis = 1)
+#           
+#           abline(0,1, col = "red")
+#           
+#         }
+#            
+#         
+# 
+#       }
+#       
+#     dev.off()
+#     }
+#   }
+#   
+# 
+#  
+# }
+# 
+# 
+# levy_pp_plot(dat = All_list_Cleaned_cut, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut, pdf_name = "Figure_PP_Check_Levy_LP_Year", log_ind = 0)
+# 
+# levy_pp_plot(dat = All_list_Cleaned_cut, cond_ind = "Year", var_ind = "LP_diff", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut, pdf_name = "Figure_PP_Check_Levy_LP_Change_Year", log_ind = 0)
+# 
+# levy_pp_plot(dat = All_list_Cleaned_cut, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut, pdf_name = "Figure_PP_Check_Levy_LP_log_Year", log_ind = 1)
+
+
+
+## The following is to generate the example plot of LP and LP change for France in Section 3.
+
+# if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
+# pacman::p_load(boot,dplyr,StableEstim,devtools, scales)
+# 
+# devtools::load_all("fittinglevy")
+# 
+# load("All_list_Cleaned_cut.Rda") ## load the data file created from "Productivity_Analysis_Data.Rmd"
+# load("Labels.Rda")
+
+
+k <- which(country_names =="France")
+
+all_list <- list()
+
+all_list[[k]] <-  All_list_Cleaned_cut[[k]]%>%
+  select(IDNR, Year, EMPL, LP, LP_diff) %>% # Firm ID, Year, Firm Size, Industry ID, Labor Produtivity, Labor Productivity Change, Employment
+  na.omit() %>%
+  filter(EMPL > 1) %>% # remove self-employed persons
+  mutate(LP = LP/1000,
+         LP_diff = LP_diff/1000) %>%
+  mutate(Year_diff = Year - lag(Year,1)) %>%
+  mutate(LP_diff = ifelse(Year_diff > 1, NA, LP_diff))
+
+
+
+
+all_list_lp <-  all_list[[k]]$LP
+all_list_lp_change <- all_list[[k]]$LP_diff
+
 neg_cut <- 0.0025 # negative cut-off point
 pov_cut <- 0.9975 # positive cut-off point
 
-levy_pp_plot <- function(dat, cond_ind, var_ind, c_names, cut_num, neg_cut, pov_cut, pdf_name, log_ind) { # the function takes 8 arguments: 1) data generated and cleaned in section 0.2, 2) the number of bins, 3) the index of the variable that is used for the conditional class, 4) the target variable name, 5) the name of class, 6) the minimum number of observations for each class,  7) the cutting point on the left tail, 8) the cutting point on the right tail
-  result_list <- list()
-  
-  c_uni_list <- list()
-  c_uni_num_list <- list()
-  
-   #length(dat)
-  for (k in 1:length(dat)) {
-    print(k)
-    
-    zz <- dat[[k]] %>%
-      select(IDNR, Year, COMPCAT, NACE_CAT, LP, LP_diff, EMPL) %>% # Firm ID, Year, Firm Size, Industry ID, Labor Produtivity, Labor Productivity Change, Employment
-      filter(EMPL > 1) %>% # remove self-employed persons
-      mutate(LP = LP / 1000) %>% # change the unit scale of the labor productivity by dividing it by 1000
-      mutate(LP_diff = LP_diff / 1000) # percentage unit for the growth variables
-    
-    zz <- as.data.frame(zz)
-    
-    zz$Cond <- zz[, cond_ind] # create a new column of the class variable
-    zz$Var <- zz[, var_ind] # create a new column of the value variable
-    
-    
-    zz <- zz %>%
-      select(IDNR, Year, Var, Cond) %>%
-      na.omit() %>%
-      filter(Var > quantile(Var, neg_cut) & Var < quantile(Var, pov_cut)) %>% # cut the tail
-      group_by(Cond) %>%
-      filter(length(IDNR) > cut_num) # set the minimum number of obs for each class
-    
-    
-    if (nrow(zz) == 0) {
-      plot(1,1, yaxt = "n", xaxt = "n", main = "", cex.main = 1.2, xlab = "", ylab = "", cex = 0) 
-      
-    } else {
-      c_uni <- unique(zz$Cond) # unique class 
-      
-      c_uni_name <- c()
-      c_uni_num <- c() 
-      
-      for (i in 1:length(c_uni)) {
-        c_uni_num[i] <- which(c_names %in% c_uni[i])
-      }
-      
-      c_uni_num <- sort(c_uni_num)
-      c_uni_name <- c_names[c_uni_num] # record the class names
-      
-      c_list <- list()
-      #length(c_uni_name)
-      pdf(paste(pdf_name, "_",country_names[k], ".pdf", sep = ""), height = 10, width = 7.)
-      par(mfrow = c(4, 3), mar = c(3, 2.7, 1, 1), mgp = c(1.3, .3, 0), tck = -.01, oma = c(0, 0, 2, 0))
-      
-      for (c in 1:length(c_uni_name)) {
-        print(paste(length(c_uni), c))
-        
-        c_lp <- zz$Var[zz$Cond == c_uni_name[c]] # for each class
-        
-        if(log_ind == 1){
-          c_lp <- log(c_lp[c_lp > 0])
-        }else{
-          c_lp <- c_lp
-        }
-        
-        levy_result <- levy_fitting(dat_t = c_lp, bin_num = 100, include_bootstrap=FALSE) # Levy estimation
-        
-        est_levy <- levy_result$levy_para
-        
-        if(est_levy[1] == 0.5 | est_levy[2] == 0| est_levy[3] == 1 | est_levy[4] == 0){
-          plot(1,1, yaxt = "n", xaxt = "n", xlab = "Stable Fit (CDF)", ylab = "Data (CDF)", main = paste(country_names[k],":",c_uni_name[c], sep = ""), cex = 0, cex.main = 0.9)
-          
-        } else{
-          c_lp_sort <- sort(c_lp, decreasing = F)
-          model_cdf <- pstable(c_lp_sort , alpha = est_levy[1], beta = est_levy[2], gamma = est_levy[3], delta = est_levy[4])
-          data_cdf <- ecdf(c_lp)
-          
-          
-          plot(model_cdf, data_cdf(c_lp_sort), cex = 0.2, yaxt = "n", xaxt = "n", xlab = "Stable Fit (CDF)", ylab = "Data (CDF)", main = paste(country_names[k],":",c_uni_name[c], sep = ""), cex.main = 0.9)
-          
-          axis(side = 2,lwd = 0.3, cex.axis = 1)
-          axis(side = 1, lwd = 0.3, cex.axis = 1)
-          
-          abline(0,1, col = "red")
-          
-        }
-           
-        
+LP_All <- subset(all_list_lp, all_list_lp > quantile(all_list_lp, neg_cut, na.rm = T) & all_list_lp < quantile(all_list_lp, pov_cut, na.rm = T))
+LP_change_All <- subset(all_list_lp_change, all_list_lp_change > quantile(all_list_lp_change, neg_cut, na.rm = T) & all_list_lp_change < quantile(all_list_lp_change, pov_cut, na.rm = T))
 
-      }
-      
-    dev.off()
-    }
-  }
-  
-
- 
-}
+LP_All_levy <- levy_fitting(dat_t = LP_All, bin_num = 100, include_bootstrap = FALSE)
+LP_change_All_levy <- levy_fitting(dat_t = LP_change_All, bin_num = 100, include_bootstrap = FALSE)
 
 
-levy_pp_plot(dat = All_list_Cleaned_cut, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut, pdf_name = "Figure_PP_Check_Levy_LP_Year", log_ind = 0)
+##
+euro <- dollar_format(prefix = "\u20ac", big.mark = ",")
 
-levy_pp_plot(dat = All_list_Cleaned_cut, cond_ind = "Year", var_ind = "LP_diff", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut, pdf_name = "Figure_PP_Check_Levy_LP_Change_Year", log_ind = 0)
+cairo_pdf(paste("France_All.pdf", sep = ""),  height = 4.5, width = 8.5)
+par(mfrow = c(1, 2), mar = c(3, 3.2, 1.5, 1), mgp = c(1.8, .2, 0), tck = -.01, oma = c(0, 0, 1, 0), las = 1)
 
-levy_pp_plot(dat = All_list_Cleaned_cut, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut, pdf_name = "Figure_PP_Check_Levy_LP_log_Year", log_ind = 1)
+
+#plot(LP_All_levy$data_mid, LP_All_levy$data_p,log = "y", yaxt = "n", xaxt = "n", cex.main = 1.2, xlab = "", ylab = "Log Density", main = "Labor Productivity", pch = 16, col = rgb(0, 0, 0, alpha=0.3), cex = 1.5)
+
+#lines(LP_All_levy$data_mid, LP_All_levy$levy_q, col = "black", lwd = 2., lty = 1) # Levy fit
+
+#dd <- hist(LP_All, 100, freq = F,  col = rgb(0, 0, 0, alpha=0.3), yaxt = "n", xaxt = "n",  xlab = "", main = "Labor Productivity" )
+
+plot(LP_All_levy$data_mid, log10(LP_All_levy$data_p), cex = 1,  yaxt = "n", xaxt = "n", cex.main = 1.2, xlab = "", ylab = "Density", main =   expression("Labor Productivity"),  pch = 21, bg = "lightgray", col = "black", frame = FALSE)
+
+x_lab <- "LP"
+mtext(side = 1, text= paste(x_lab," (", euro(1000) ,"/Employee)", sep = ""), line = 1.2, cex =  0.9)
+
+axis(1, at = round(seq(min(LP_All_levy$data_mid), max(LP_All_levy$data_mid), length.out = 5),0),  labels = round(seq(min(LP_All_levy$data_mid), max(LP_All_levy$data_mid), length.out = 5),-2), lwd = 0.3, cex.axis = .9)
+
+axis_int <- seq(min(log10(LP_All_levy$data_p[LP_All_levy$data_p >0])), max(log10(LP_All_levy$data_p)), length.out = 4)
+labels <- sapply(round(axis_int,0),function(i) as.expression(bquote(10^ .(i))))
+axis(2, at = axis_int, labels = labels, lwd = 0.3, cex.axis = .9)
+
+lines(LP_All_levy$data_mid, log10(LP_All_levy$levy_q),  lwd = 1.1, lty = 1) # Levy fit
+
+
+plot(LP_change_All_levy$data_mid, log10(LP_change_All_levy$data_p), cex = 1,  yaxt = "n", xaxt = "n", cex.main = 1.2, xlab = "", ylab = "Density", main =   expression("Labor Productivity Change"),  pch = 21, bg = "lightgray", col = "black", frame = FALSE)
+
+x_lab <- "LP_Change"
+mtext(side = 1, text= paste(x_lab," (", euro(1000) ,"/Employee)", sep = ""), line = 1.2, cex =  0.9)
+
+axis(1, at = round(seq(min(LP_change_All_levy$data_mid), max(LP_change_All_levy$data_mid), length.out = 5),0),  labels = round(seq(min(LP_change_All_levy$data_mid), max(LP_change_All_levy$data_mid), length.out = 5),-2), lwd = 0.3, cex.axis = .9)
+
+axis_int <- seq(min(log10(LP_change_All_levy$data_p[LP_change_All_levy$data_p >0])), max(log10(LP_change_All_levy$data_p)), length.out = 4)
+labels <- sapply(round(axis_int,0),function(i) as.expression(bquote(10^ .(i))))
+axis(2, at = axis_int, labels = labels, lwd = 0.3, cex.axis = .9)
+
+lines(LP_change_All_levy$data_mid, log10(LP_change_All_levy$levy_q),  lwd = 1.1, lty = 1) # Levy fit
+dev.off()
+
+
+###

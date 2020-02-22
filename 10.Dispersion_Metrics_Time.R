@@ -1,22 +1,22 @@
+## This script is to plot the time series of dispersiion metrics in Section 4 
 
 ## loading of required data and cleaning
 load("All_list_Cleaned_cut.Rda") ## load the data file created from "Productivity_Analysis_Data.Rmd"
+load("Labels.Rda")
+
 
 load("Year_Levy_list_boot.Rda")
-#load("Size_Levy_list_boot.Rda")
-#load("Industry_Levy_list_boot.Rda")
 load("Year_non_neg_Levy_list_boot.Rda")
 load("Year_Levy_list_boot_g.Rda")
 
-load("Labels.Rda")
 
 load("Year_list_compare_AIC_SOOFI.Rda")
 load("Year_list_compare_AIC_SOOFI_g.Rda")
 
-library(RColorBrewer)
-library(dplyr)
-## Functions
+if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
+pacman::p_load(colorspace,RColorBrewer, msir, scales, grDevices, dplyr)
 
+## Functions
 fun_agg_lp <- function(dat, num_cut, neg_cut, pov_cut, bottom_cut, top_cut, var_ind) {
   result_list <- list()
   
@@ -69,7 +69,7 @@ fun_agg_lp <- function(dat, num_cut, neg_cut, pov_cut, bottom_cut, top_cut, var_
         mutate(Target_LP = LP)
     }
     
-      LP_sd_n <- zz %>%
+      LP_sd_n <- zz %>% #SD
         #select(IDNR, Year,Target_LP) %>%
         na.omit() %>%
         group_by(Year) %>%
@@ -78,27 +78,27 @@ fun_agg_lp <- function(dat, num_cut, neg_cut, pov_cut, bottom_cut, top_cut, var_
           n = n()
         )
       
-      LP_perc <- zz %>%
+      LP_perc <- zz %>% ## percentile ratio
         #select(IDNR, Year, Target_LP) %>%
         na.omit() %>%
         group_by(Year) %>%
         summarise(iqr = quantile(Target_LP, top_cut)/quantile(Target_LP, bottom_cut)) # the sum of aggregate LP for bottom_cut% firms
       
-      LP_iqr <- zz %>%
+      LP_iqr <- zz %>% # interquantile range
         #select(IDNR, Year,  Target_LP) %>%
         na.omit() %>%
         group_by(Year) %>%
         summarise(iqr = quantile(Target_LP, top_cut) - quantile(Target_LP, bottom_cut)) # the sum of aggregate LP for bottom_cut% firms
       
       # 
-      LP_l <- zz %>%
+      LP_l <- zz %>% #lower quantile 
         #select(IDNR, Year,  Target_LP) %>%
         na.omit() %>%
         group_by(Year) %>%
         summarise(iqr = quantile(Target_LP, bottom_cut)) # the sum of aggregate LP for bottom_cut% firms
 
 
-      LP_r <- zz %>%
+      LP_r <- zz %>% #upper quantile 
         #select(IDNR, Year,  Target_LP) %>%
         na.omit() %>%
         group_by(Year) %>%
@@ -145,9 +145,8 @@ lp_20 <- fun_agg_lp(dat = All_list_Cleaned_cut, neg_cut = 0.0025, pov_cut = 0.99
 # ###
 # 
 save(lp_01, lp_05, lp_10,  lp_10_uncut , lp_20, file = "lp_dispersion.Rda")
-#load("lp_dispersion.Rda")
 
-# ## the results with different cut-off points
+# ## the results with different cut-off points (non neg)
 lp_non_neg_01 <- fun_agg_lp(dat = All_list_Cleaned_cut, neg_cut = 0.0025, pov_cut = 0.9975, bottom_cut = 0.01, top_cut = 0.99, var_ind = "non_neg")
 
 lp_non_neg_05 <- fun_agg_lp(dat = All_list_Cleaned_cut, neg_cut = 0.0025, pov_cut = 0.9975, bottom_cut = 0.05, top_cut = 0.95, var_ind = "non_neg")
@@ -157,10 +156,10 @@ lp_non_neg_10 <- fun_agg_lp(dat = All_list_Cleaned_cut, neg_cut = 0.0025, pov_cu
 lp_non_neg_20 <- fun_agg_lp(dat = All_list_Cleaned_cut, neg_cut = 0.0025, pov_cut = 0.9975, bottom_cut = 0.2, top_cut = 0.8, var_ind = "non_neg")
 
 # ###
-# 
+# ## the results with different cut-off points (log)
 save(lp_non_neg_01, lp_non_neg_05, lp_non_neg_10, lp_non_neg_20, file = "lp_non_neg_dispersion.Rda")
-#load("lp_non_neg_dispersion.Rda")
 
+## 
 lp_log_01 <- fun_agg_lp(dat = All_list_Cleaned_cut, neg_cut = 0.0025, pov_cut = 0.9975, bottom_cut = 0.01, top_cut = 0.99, var_ind = "log" )
 #
  lp_log_05 <- fun_agg_lp(dat = All_list_Cleaned_cut, neg_cut = 0.0025, pov_cut = 0.9975, bottom_cut = 0.05, top_cut = 0.95, var_ind = "log" )
@@ -173,9 +172,7 @@ save(lp_log_01, lp_log_05, lp_log_10, lp_log_20, file = "lp_log_dispersion.Rda")
 #load("lp_log_dispersion.Rda") 
 
 
-#lp_log_10_old 
-#lp_log_10 
-
+## plot function 
 dispersion_plot <- function(dat_list, iqr_data_1, iqr_data_2, iqr_data_3, leg_pos, title_n, aep_ind) { # this function has 5 arguments. 1) the name of the pdf file, 2) the title of the figure, 3) the data file that is generated from the fun_fit_levy function in "Prod_Fitting_Levy.R" script, 4) variable number: 1:Size, 2: Industry, 5) variable index: either "size" or "ind"
   
 
@@ -365,25 +362,28 @@ dispersion_plot <- function(dat_list, iqr_data_1, iqr_data_2, iqr_data_3, leg_po
 # # setwd("~/Desktop/Cleaned Rda/Productivity/Figures")
 # 
 
-#
+# LP Levy para
 dispersion_plot(dat_list =  LP_year_list_compare_AIC_SOOFI, iqr_data_1 = lp_05, iqr_data_2 = lp_10, iqr_data_3 = lp_20, leg_pos = "topleft", title_n = "LP_dispersion", aep_ind = 0)
 
+# LP AEP para
 
 dispersion_plot(dat_list =  LP_year_list_compare_AIC_SOOFI, iqr_data_1 = lp_05, iqr_data_2 = lp_10, iqr_data_3 = lp_20, leg_pos = "topright", title_n = "LP_dispersion_AEP", aep_ind = 1)
 
-#
+# uncutLP Levy para
 dispersion_plot(dat_list = LP_year_list_compare_AIC_SOOFI_uncut, iqr_data_1 = lp_05, iqr_data_2 = lp_10_uncut, iqr_data_3 = lp_20, leg_pos = "topleft", title_n = "LP_dispersion_uncut", aep_ind = 0)
 
 #dispersion_plot(dat_list = LP_year_non_neg_Levy_list_boot, iqr_data_1 = lp_non_neg_05, iqr_data_2 = lp_non_neg_10, iqr_data_3 = lp_non_neg_20,  leg_pos = "topleft", title_n = "LP_non_neg_dispersion", aep_ind = 0)
 
-#
+# Log LP Levy para
 dispersion_plot(dat_list = LP_log_year_list_compare_AIC_SOOFI, iqr_data_1 = lp_log_05, iqr_data_2 = lp_log_10, iqr_data_3 = lp_log_20,  leg_pos = "topleft", title_n = "LP_log_dispersion", aep_ind = 0)
 
+# Log LP AEP para
 dispersion_plot(dat_list = LP_log_year_list_compare_AIC_SOOFI, iqr_data_1 = lp_log_05, iqr_data_2 = lp_log_10, iqr_data_3 = lp_log_20,  leg_pos = "topleft", title_n = "LP_log_dispersion_AEP", aep_ind = 1)
-### AEP
 
 
-####
+
+
+#### This is to show the impact of location change on the dispersion (See Appendix)
 a <- rgamma(200000, shape = 3, rate = 1) + 1
 b <- a - 1
 

@@ -5,7 +5,7 @@ library(RColorBrewer)
 library(colorspace)
 
 
-############ 1. Plot ############
+############ 1. Plot ############ This is to create an example pdf of Levy 
 col_8 <- brewer.pal(8,"Set2")
 x_seq <- seq(-6, 6, by = 0.01)
 
@@ -69,15 +69,3 @@ legend("topright", legend = c(expression(paste(delta,"=-3")), expression(paste(d
 
 #mtext(expression(paste("Stable Distributions")), side=3, line=1, outer=TRUE, cex=1.2)
 dev.off()
-
-
-theta <- c(1.2,1, 0)
-pm <- 0
-
-fake_d <- rstable(100000, alpha = 1.5, beta = 0, gamma = 1, delta = 0, pm = 0)
-
-
-
-
-kk_par <- paraep4(kk, method= "A") #"DG"
-

@@ -1,4 +1,6 @@
 ############ 0. Basic Set up ############
+# This script is to generate the time series plot of the estiamted location parameters of LP change to compare them to the aggregate LP from PWT
+
 ## loading of required libraries
 # loading of libraries
 if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', repos='http://cran.r-project.org')
@@ -6,7 +8,6 @@ pacman::p_load(colorspace,RColorBrewer, msir, plotly, dplyr)
 
 # loading of data
 load("Year_Levy_list_boot.Rda")
-
 load("Labels.Rda")
 load("All_list_Cleaned_cut.Rda")
 
@@ -92,14 +93,16 @@ dat_list <- LP_Change_year_Levy_list_boot
   
   }
    
-   p_list[[14]]
+   
+   
+   ## generate jpeg 
    
    if (!require("processx")) install.packages("processx")
    Sys.setenv("plotly_username" = "yangjh2612")
    Sys.setenv("plotly_api_key" = "gASmTGISfKZf9e2LCJAI")
    
 
-   for(k in all_but_3_ind[11:14]){
+   for(k in all_but_3_ind){
      plotly_IMAGE(p_list[[k]], format = "jpeg", out_file = paste(country_names[k],".png", sep = ""))  
    }
   

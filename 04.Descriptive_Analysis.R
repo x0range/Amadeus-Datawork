@@ -12,19 +12,18 @@ if (!'pacman' %in% installed.packages()[,'Package']) install.packages('pacman', 
 pacman::p_load(RColorBrewer,dplyr,xtable,tidyr)
 
 
-load("All_list_Cleaned_cut.Rda") ## load the data file created from "Productivity_Analysis_Data.Rmd"
-
-## 0.3 Setting the class names: Year, Size, Industry,
-load("Labels.Rda")
+load("All_list_Cleaned_cut.Rda") ## load the main data file 
+load("Labels.Rda") ## load the auxiliary index file 
 
 
 
 ############ 1. a brief summary in a latex form: the number of obs for VA and EMPL variable ############ 
-## 1.1. summary_1: record the number of obs for VA and EMPL variable 
+## 1.1. summary_1: record the number of obs for VA and the proportion of negative values 
 summary_1 <- list()
 for (k in 1:length(All_list_Cleaned_cut)) {
   zz <- All_list_Cleaned_cut[[k]] %>%
-    select(Year, IDNR, LP) %>%
+    select(Year, IDNR, LP, EMPL) %>%
+    filter(EMPL > 1)%>% #remove self-employed
     na.omit() %>%
     group_by(Year) %>%
     summarise(n = n(),
@@ -61,10 +60,10 @@ rownames(summary_table) <- year_names # names of the row: year
 summary_table <- format(t(summary_table), big.mark = ",") # make the numeric values separated by a comma at every 1000
 
 summary_table <- xtable(summary_table, digits = rep(0, 11)) # latex form
-
+summary_table
 ##
 
-## 1.2. arrange summary_1 to make it suitable for latex form
+## 1.2. arrange summary_1 to make it suitable for latex form for the proportion of negative value added
 summary <- list()
 for (k in 1:length(summary_1)) {
   print(k)
@@ -91,8 +90,9 @@ rownames(summary_table) <- year_names # names of the row: year
 summary_table <- format(t(summary_table), big.mark = ",") # make the numeric values separated by a comma at every 1000
 
 summary_table <- xtable(summary_table, digits = rep(0, 11)) # latex form
-
+summary_table
 ##
+
 ############ 2. Diagnostics for the size and industry proportion ############
 ## 2.1. Function set up
 # 2.1.1 "fun_diagnostic_1" function to get the proportion of each class in the sample. It returns Size and Sector proportion for each country sample in the list of the list forms.
@@ -213,7 +213,7 @@ diag_size_ind <- fun_diagnostic_1(All_list_Cleaned_cut)
 fun_plot_diag(pdf_name = "Figure_Size_Proportion", title = "", dat = diag_size_ind, var_num = 1, var_ind = "size") # var_num = 1 means size variable
 
 # plot for industry proportion
-fun_plot_diag(pdf_name = "Figure_Ind_Proportion", title = "", dat = diag_size_ind, var_num = 2, var_ind = "ind") # var_num = 1s means industry variable
+fun_plot_diag(pdf_name = "Figure_Ind_Proportion", title = "", dat = diag_size_ind, var_num = 2, var_ind = "ind") # var_num = 2 means industry variable
 
 
 
@@ -550,15 +550,15 @@ fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_Change_pov_tail", titl
 
 
 #cross-sectional plots of LP and LP\_change (country-size)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = "COMPCAT_one", var_ind = "LP", x_lab = "log(LP)", c_names = size_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, log_x = 0)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = "COMPCAT_one", var_ind = "LP", x_lab = "LP", c_names = size_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, log_x = 0)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Change_pov_tail", title = "Right Tail of Log Density of Labor Productivity Change",cond_ind = "COMPCAT_one", var_ind = "LP_diff", x_lab = "log(LP Change)", c_names = size_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, log_x = 0)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Change_pov_tail", title = "Right Tail of Log Density of Labor Productivity Change",cond_ind = "COMPCAT_one", var_ind = "LP_diff", x_lab = "LP Change", c_names = size_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, log_x = 0)
 
 
 # cross-sectional plots of LP and LP\_change (country-industry)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = "NACE_CAT", var_ind = "LP", x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, log_x = 0)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_pov_tail", title = "Right Tail of Log Density of Labor Productivity", cond_ind = "NACE_CAT", var_ind = "LP", x_lab = "LP", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, log_x = 0)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Change_pov_tail", title = "Right Tail of Log Density of Labor Productivity Change", cond_ind = "NACE_CAT", var_ind = "LP_diff", x_lab = "log(LP Change)", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, log_x = 0)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Change_pov_tail", title = "Right Tail of Log Density of Labor Productivity Change", cond_ind = "NACE_CAT", var_ind = "LP_diff", x_lab = "LP Change", c_names = ind_name_table$ind_names, leg_pos = "bottomleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, log_x = 0)
 
 
 
@@ -566,19 +566,19 @@ fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Change_pov_tail", 
 # cross-sectional plots of LP and LP\_change (country-year)
 fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = "Year", var_ind = "LP", x_lab = "LP", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE, log_x = 0)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_log_neg_tail", title = "Left Tail of Log Density of Log Labor Productivity", cond_ind = "Year", var_ind = "LP", x_lab = "LP_log", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE, log_x = 1)
+# fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_log_neg_tail", title = "Left Tail of Log Density of Log Labor Productivity", cond_ind = "Year", var_ind = "LP", x_lab = "LP_log", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE, log_x = 1)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_Change_neg_tail", title = "Left Tail of Log Density of Labor Productivity Change", cond_ind = "Year", var_ind = "LP_diff",  x_lab = "log(LP Change)", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE, log_x = 0)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Year_LP_Change_neg_tail", title = "Left Tail of Log Density of Labor Productivity Change", cond_ind = "Year", var_ind = "LP_diff",  x_lab = "LP Change", c_names = year_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 10000, n_col = 2, left_tail=TRUE, log_x = 0)
 
 
 #cross-sectional plots of LP and LP\_change (country-size)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = "COMPCAT_one", var_ind = "LP", x_lab = "log(LP)", c_names = size_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, left_tail=TRUE, log_x = 0)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = "COMPCAT_one", var_ind = "LP", x_lab = "LP", c_names = size_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, left_tail=TRUE, log_x = 0)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Change_neg_tail", title = "Left Tail of Log Density of Labor Productivity Change", cond_ind = "COMPCAT_one", var_ind = "LP_diff", x_lab = "log(LP Change)", c_names = size_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, left_tail=TRUE, log_x = 0)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Size_LP_Change_neg_tail", title = "Left Tail of Log Density of Labor Productivity Change", cond_ind = "COMPCAT_one", var_ind = "LP_diff", x_lab = "LP Change", c_names = size_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 5000, n_col = 1, left_tail=TRUE, log_x = 0)
 
 
 # cross-sectional plots of LP and LP\_change (country-industry)
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = "NACE_CAT", var_ind = "LP", x_lab = "log(LP)", c_names = ind_name_table$ind_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, left_tail=TRUE, log_x = 0)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_neg_tail", title = "Left Tail of Log Density of Labor Productivity", cond_ind = "NACE_CAT", var_ind = "LP", x_lab = "LP", c_names = ind_name_table$ind_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, left_tail=TRUE, log_x = 0)
 
-fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Change_neg_tail", title = "Left Tail of Log Density of Labor Productivity Change", cond_ind = "NACE_CAT", var_ind = "LP_diff", x_lab = "log(LP Change)", c_names = ind_name_table$ind_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, left_tail=TRUE, log_x = 0)
+fun_plot_marginal_tail(pdf_name = "Figure_Country_Industry_LP_Change_neg_tail", title = "Left Tail of Log Density of Labor Productivity Change", cond_ind = "NACE_CAT", var_ind = "LP_diff", x_lab = "LP Change", c_names = ind_name_table$ind_names, leg_pos = "topleft", tail_size = 0.05, neg_cut = neg_cut, pov_cut = pov_cut, cut_num = 1000, n_col = 3, left_tail=TRUE, log_x = 0)
 

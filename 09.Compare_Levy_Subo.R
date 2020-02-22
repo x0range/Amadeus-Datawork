@@ -27,8 +27,11 @@ fun_CV <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_cut, p
       select(IDNR, Year, COMPCAT, NACE_CAT, LP, LP_diff, EMPL) %>% # Firm ID, Year, Firm Size, Industry ID, Labor Produtivity, Labor Productivity Growth, TFP Growth, Employment
       filter(EMPL > 1) %>% # remove self-employed persons
       mutate(LP = LP / 1000) %>% # change the unit scale of the labor productivity by dividing it by 1000
-      mutate(LP_diff = LP_diff / 1000) # percentage unit for the growth variables
-
+      mutate(LP_diff = LP_diff / 1000) %>% # percentage unit for the growth variables
+      group_by(IDNR) %>% 
+      mutate(Year_diff = Year - lag(Year,1)) %>%
+      mutate(LP_diff = ifelse(Year_diff > 1, NA, LP_diff))
+    
     zz <- as.data.frame(zz)
 
     zz$Cond <- zz[, cond_ind] # create a new column of the class variable
@@ -92,15 +95,24 @@ fun_CV_g <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_cut,
       mutate(LP = LP / 1000) %>% # change the unit scale of the labor productivity by dividing it by 1000
       group_by(IDNR) %>% 
       filter(LP > 0) %>% # keep positive value added
+      filter(CP > 0) %>% # keep positive value added
       mutate(LP_g = (LP - lag(LP,1))/lag(LP,1),
-             log_LP = log(LP),
-             LP_lg = log(LP/lag(LP,1)),
              CP_g = (CP - lag(CP,1))/lag(CP,1),
-             TFP_g = LP_g*WS + CP_g*(1-WS),
-             LP_diff = LP_diff / 1000) %>%
-      #mutate(lag_neg = sign(lag(LP,1))) %>%
-      #filter(lag_neg == 1) %>%
-      arrange(IDNR)
+             TFP_g = LP_g*lag(WS,1) + CP_g*(1-lag(WS,1)),
+             log_LP = log(LP),
+             log_CP = log(CP),
+             log_TFP = WS*log_LP + (1-WS)*log_CP,
+             LP_lg = log(LP/lag(LP,1)),
+             CP_lg = log(CP/lag(CP,1)),
+             TFP_lg = LP_lg*lag(WS,1) + CP_lg*(1-lag(WS,1))) %>%
+      mutate(Year_diff = Year - lag(Year,1)) %>%
+      mutate(LP_g = ifelse(Year_diff > 1, NA, LP_g),
+             CP_g = ifelse(Year_diff > 1, NA, CP_g),
+             TFP_g = ifelse(Year_diff > 1, NA, TFP_g),
+             LP_lg = ifelse(Year_diff > 1, NA, LP_lg),
+             CP_lg = ifelse(Year_diff > 1, NA, CP_lg),
+             TFP_lg = ifelse(Year_diff > 1, NA, TFP_lg)
+      ) 
     
     zz <- as.data.frame(zz)
     
@@ -171,27 +183,30 @@ pov_cut <- 0.9975 # positive cut-off point
 
 ## Year class
 # LP conditional on year (year class)
-#LP_year_list_compare <- fun_CV(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
-
-# LP_change conditional on year
-#LP_Change_year_list_compare <- fun_CV(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP_diff", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
-
-# setwd("~/Desktop/Cleaned Rda/Productivity")
-# save(LP_year_list_compare ,  LP_Change_year_list_compare,  file = "Year_list_compare.Rda")
-
 load("Year_list_compare.Rda")
 
+LP_year_list_compare <- fun_CV(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+
+# LP_change conditional on year
+LP_Change_year_list_compare <- fun_CV(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP_diff", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+
+
+# setwd("~/Desktop/Cleaned Rda/Productivity")
+save(LP_year_list_compare ,  LP_Change_year_list_compare,  file = "Year_list_compare.Rda")
+
+
 # LP conditional on year (year class)
-# LP_log_year_list_compare <- fun_CV_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "log_LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+load("Year_list_compare_g.Rda")
+
+LP_log_year_list_compare <- fun_CV_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "log_LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
 # 
 # # LP_change conditional on year
-# LP_lg_year_list_compare <- fun_CV_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP_lg", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_lg_year_list_compare <- fun_CV_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP_lg", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
 # 
 #  setwd("~/Desktop/Cleaned Rda/Productivity")
-#  save(LP_log_year_list_compare ,  LP_lg_year_list_compare,  file = "Year_list_compare_g.Rda")
+save(LP_log_year_list_compare ,  LP_lg_year_list_compare,  file = "Year_list_compare_g.Rda")
 
  
- load("Year_list_compare_g.Rda")
 ############ 2. Soofi and AIC ############
 
 # Fittig function for the levy
@@ -250,8 +265,11 @@ fun_AIC_SOOFI <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg
       select(IDNR, Year, COMPCAT, NACE_CAT, LP, LP_diff, EMPL) %>% # Firm ID, Year, Firm Size, Industry ID, Labor Produtivity, Labor Productivity Growth, TFP Growth, Employment
       filter(EMPL > 1) %>% # remove self-employed persons
       mutate(LP = LP / 1000) %>% # change the unit scale of the labor productivity by dividing it by 1000
-      mutate(LP_diff = LP_diff / 1000) # percentage unit for the growth variables
-
+      mutate(LP_diff = LP_diff / 1000) %>%# percentage unit for the growth variables
+      group_by(IDNR) %>% 
+      mutate(Year_diff = Year - lag(Year,1)) %>%
+      mutate(LP_diff = ifelse(Year_diff > 1, NA, LP_diff))
+    
     zz <- as.data.frame(zz)
 
     zz$Cond <- zz[, cond_ind] # create a new column of the class variable
@@ -298,6 +316,7 @@ fun_AIC_SOOFI <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg
   return(all_list)
 }
 
+
 fun_AIC_SOOFI_g <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_cut, pov_cut) { # the function takes 8 arguments: 1) data generated and cleaned in section 0.2, 2) the number of bins, 3) the index of the variable that is used as the conditional class, 4) the index for target variable, 5) the name of class, 6) the minimum number of observations for each class,  7) the cutting point on the left tail, 8) the cutting point on the right tail
   result_list <- list()
   
@@ -308,18 +327,30 @@ fun_AIC_SOOFI_g <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, n
     print(k)
     
     zz <- dat[[k]] %>%
-      select(IDNR, Year, COMPCAT, NACE_CAT, LP,LP_diff, CP, EMPL, WS) %>% # Firm ID, Year, Firm Size, Industry ID, Labor Produtivity, Labor Productivity Change, Employment
+      select(IDNR, Year, COMPCAT, NACE_CAT, LP, CP, EMPL, WS) %>% # Firm ID, Year, Firm Size, Industry ID, Labor Produtivity, Labor Productivity Change, Employment
       filter(EMPL > 1) %>% # remove self-employed persons
       mutate(LP = LP / 1000) %>% # change the unit scale of the labor productivity by dividing it by 1000
       group_by(IDNR) %>% 
       filter(LP > 0) %>% # keep positive value added
+      filter(CP > 0) %>% # keep positive value added
       mutate(LP_g = (LP - lag(LP,1))/lag(LP,1),
-             log_LP = log(LP),
-             LP_lg = log(LP/lag(LP,1)),
              CP_g = (CP - lag(CP,1))/lag(CP,1),
-             TFP_g = LP_g*WS + CP_g*(1-WS),
-             LP_diff = LP_diff / 1000)
-    
+             TFP_g = LP_g*lag(WS,1) + CP_g*(1-lag(WS,1)),
+             log_LP = log(LP),
+             log_CP = log(CP),
+             log_TFP = WS*log_LP + (1-WS)*log_CP,
+             LP_lg = log(LP/lag(LP,1)),
+             CP_lg = log(CP/lag(CP,1)),
+             TFP_lg = LP_lg*lag(WS,1) + CP_lg*(1-lag(WS,1))) %>%
+      mutate(Year_diff = Year - lag(Year,1)) %>%
+      mutate(LP_g = ifelse(Year_diff > 1, NA, LP_g),
+             CP_g = ifelse(Year_diff > 1, NA, CP_g),
+             TFP_g = ifelse(Year_diff > 1, NA, TFP_g),
+             LP_lg = ifelse(Year_diff > 1, NA, LP_lg),
+             CP_lg = ifelse(Year_diff > 1, NA, CP_lg),
+             TFP_lg = ifelse(Year_diff > 1, NA, TFP_lg)
+      ) 
+      
     zz <- as.data.frame(zz)
     
     zz$Cond <- zz[, cond_ind] # create a new column of the class variable
@@ -367,74 +398,77 @@ fun_AIC_SOOFI_g <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, n
 }
 
 
-# fun_num_obs <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_cut, pov_cut) { # the function takes 8 arguments: 1) data generated and cleaned in section 0.2, 2) the number of bins, 3) the index of the variable that is used as the conditional class, 4) the index for target variable, 5) the name of class, 6) the minimum number of observations for each class,  7) the cutting point on the left tail, 8) the cutting point on the right tail
-#   result_list <- list()
-#   
-#   c_uni_list <- list()
-#   c_uni_num_list <- list()
-#   num_obs <- list()
-#   for (k in 1:length(dat)) {
-#     print(k)
-#     
-#     zz <- dat[[k]] %>%
-#       select(IDNR, Year, COMPCAT, NACE_CAT, LP, LP_diff, EMPL) %>% # Firm ID, Year, Firm Size, Industry ID, Labor Produtivity, Labor Productivity Growth, TFP Growth, Employment
-#       filter(EMPL > 1) %>% # remove self-employed persons
-#       mutate(LP = LP / 1000) %>% # change the unit scale of the labor productivity by dividing it by 1000
-#       mutate(LP_diff = LP_diff / 1000) # percentage unit for the growth variables
-#     
-#     zz <- as.data.frame(zz)
-#     
-#     zz$Cond <- zz[, cond_ind] # create a new column of the class variable
-#     zz$Var <- zz[, var_ind] # create a new column of the value variable
-#     
-#     
-#     zz <- zz %>%
-#       select(IDNR, Year, Var, Cond) %>%
-#       na.omit() %>%
-#       filter(Var > quantile(Var, neg_cut) & Var < quantile(Var, pov_cut)) %>% # cut the tail
-#       group_by(Cond) %>%
-#       filter(length(IDNR) > cut_num) # set the minimum number of obs for each class
-#     
-#     
-#     if (nrow(zz) == 0) {
-#       result_list[[k]] <- NA
-#     } else {
-#       c_uni <- unique(zz$Cond) # unique class
-#       
-#       c_uni_name <- c()
-#       c_uni_num <- c()
-#       
-#       for (i in 1:length(c_uni)) {
-#         c_uni_num[i] <- which(c_names %in% c_uni[i])
-#       }
-#       
-#       c_uni_num <- sort(c_uni_num)
-#       c_uni_name <- c_names[c_uni_num]
-#       
-#       c_list <- list()
-#       for (c in 1:length(c_uni_name)) {
-#         print(paste(length(c_uni), c))
-#         c_lp <- zz$Var[zz$Cond == c_uni_name[c]] # for each class
-#         
-#         c_list[[c]] <- length(c_lp) # Levy estimation
-#       }
-#       c_uni_list[[k]] <- c_uni_name # record the ordered name of unique class
-#       c_uni_num_list[[k]] <- c_uni_num # record the ordered numeric name of unique class
-#       result_list[[k]] <- c_list # record the result from "fun_info_gen"
-#       num_obs[[k]] <- nrow(zz)
-#     }
-#   }
-#   all_list <- list(result_list, c_uni_list, c_uni_num_list, num_obs)
-#   return(all_list)
-# }
-# 
-# 
-# LP_num_obs <- fun_num_obs(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
-# 
- #LP_Change_num_obs <- fun_num_obs(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP_diff", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
-# 
-# save(LP_num_obs, LP_Change_num_obs, file = "num_obs.Rda")
+fun_num_obs <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_cut, pov_cut) { # the function takes 8 arguments: 1) data generated and cleaned in section 0.2, 2) the number of bins, 3) the index of the variable that is used as the conditional class, 4) the index for target variable, 5) the name of class, 6) the minimum number of observations for each class,  7) the cutting point on the left tail, 8) the cutting point on the right tail
+  result_list <- list()
 
+  c_uni_list <- list()
+  c_uni_num_list <- list()
+  num_obs <- list()
+  for (k in 1:length(dat)) {
+    print(k)
+
+    zz <- dat[[k]] %>%
+      select(IDNR, Year, COMPCAT, NACE_CAT, LP, LP_diff, EMPL) %>% # Firm ID, Year, Firm Size, Industry ID, Labor Produtivity, Labor Productivity Growth, TFP Growth, Employment
+      filter(EMPL > 1) %>% # remove self-employed persons
+      mutate(LP = LP / 1000) %>% # change the unit scale of the labor productivity by dividing it by 1000
+      mutate(LP_diff = LP_diff / 1000) %>%
+      group_by(IDNR) %>% 
+      mutate(Year_diff = Year - lag(Year,1)) %>%
+      mutate(LP_diff = ifelse(Year_diff > 1, NA, LP_diff))
+    
+    zz <- as.data.frame(zz)
+
+    zz$Cond <- zz[, cond_ind] # create a new column of the class variable
+    zz$Var <- zz[, var_ind] # create a new column of the value variable
+
+
+    zz <- zz %>%
+      select(IDNR, Year, Var, Cond) %>%
+      na.omit() %>%
+      filter(Var > quantile(Var, neg_cut) & Var < quantile(Var, pov_cut)) %>% # cut the tail
+      group_by(Cond) %>%
+      filter(length(IDNR) > cut_num) # set the minimum number of obs for each class
+
+
+    if (nrow(zz) == 0) {
+      result_list[[k]] <- NA
+    } else {
+      c_uni <- unique(zz$Cond) # unique class
+
+      c_uni_name <- c()
+      c_uni_num <- c()
+
+      for (i in 1:length(c_uni)) {
+        c_uni_num[i] <- which(c_names %in% c_uni[i])
+      }
+
+      c_uni_num <- sort(c_uni_num)
+      c_uni_name <- c_names[c_uni_num]
+
+      c_list <- list()
+      for (c in 1:length(c_uni_name)) {
+        print(paste(length(c_uni), c))
+        c_lp <- zz$Var[zz$Cond == c_uni_name[c]] # for each class
+      
+        c_list[[c]] <- length(c_lp) # length of variable 
+      }
+      c_uni_list[[k]] <- c_uni_name # record the ordered name of unique class
+      c_uni_num_list[[k]] <- c_uni_num # record the ordered numeric name of unique class
+      result_list[[k]] <- c_list # record the result from "fun_info_gen"
+      num_obs[[k]] <- nrow(zz)
+    }
+  }
+  all_list <- list(result_list, c_uni_list, c_uni_num_list, num_obs)
+  return(all_list)
+}
+
+LP_num_obs <- fun_num_obs(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+
+LP_Change_num_obs <- fun_num_obs(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP_diff", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+
+save(LP_num_obs, LP_Change_num_obs, file = "num_obs.Rda")
+
+load("num_obs.Rda")
 
 # con_ind: 2: year, 3: size, 4: industry
 # var_ind: 5: LP, 6: LP_change, 7: TFP growth
@@ -443,27 +477,37 @@ fun_AIC_SOOFI_g <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, n
 # LP conditional on year (year class)
 
 
+load("Year_list_compare_AIC_SOOFI.Rda")
+
 LP_year_list_compare_AIC_SOOFI <- fun_AIC_SOOFI(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 LP_year_list_compare_AIC_SOOFI_uncut <- fun_AIC_SOOFI(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = 0, pov_cut = 1)
 # LP_change conditional on year
 
-
-#LP_Change_year_list_compare_AIC_SOOFI <- fun_AIC_SOOFI(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP_diff", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_Change_year_list_compare_AIC_SOOFI <- fun_AIC_SOOFI(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP_diff", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 #setwd("~/Desktop/Cleaned Rda/Productivity")
 save(LP_year_list_compare_AIC_SOOFI ,LP_year_list_compare_AIC_SOOFI_uncut , LP_Change_year_list_compare_AIC_SOOFI , file = "Year_list_compare_AIC_SOOFI.Rda")
-#load("Year_list_compare_AIC_SOOFI.Rda")
 
-load("Year_list_compare_AIC_SOOFI.Rda")
 
-# LP_log_year_list_compare_AIC_SOOFI <- fun_AIC_SOOFI_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "log_LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
-# 
-# LP_lg_year_list_compare_AIC_SOOFI <- fun_AIC_SOOFI_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP_lg", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
-# 
-# save(LP_log_year_list_compare_AIC_SOOFI  , LP_lg_year_list_compare_AIC_SOOFI , file = "Year_list_compare_AIC_SOOFI_g.Rda")
 
 load("Year_list_compare_AIC_SOOFI_g.Rda")
+
+LP_log_year_list_compare_AIC_SOOFI <- fun_AIC_SOOFI_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "log_LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+# 
+LP_lg_year_list_compare_AIC_SOOFI <- fun_AIC_SOOFI_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP_lg", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+# 
+save(LP_log_year_list_compare_AIC_SOOFI  , LP_lg_year_list_compare_AIC_SOOFI , file = "Year_list_compare_AIC_SOOFI_g.Rda")
+
+
+load("Year_list_compare_AIC_SOOFI_g_TFP.Rda")
+##
+TFP_log_year_list_compare_AIC_SOOFI <- fun_AIC_SOOFI_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "log_TFP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+# 
+TFP_lg_year_list_compare_AIC_SOOFI <- fun_AIC_SOOFI_g(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "TFP_lg", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+# 
+save(TFP_log_year_list_compare_AIC_SOOFI  , TFP_lg_year_list_compare_AIC_SOOFI , file = "Year_list_compare_AIC_SOOFI_g_TFP.Rda")
+
 
 ## to get the average sample size 
 # total obs per country

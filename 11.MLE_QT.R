@@ -1,51 +1,55 @@
-library(ggplot2)
-library(cowplot)
+## This script is to compare the performance of ML and QT for levy estimation (See Appendix)
 
-library(StableEstim)
+if (!"pacman" %in% installed.packages()[, "Package"]) install.packages("pacman", repos = "http://cran.r-project.org")
+pacman::p_load(dplyr, StableEstim, lmomco, devtools, ggplot2, cowplot)
 
 devtools::load_all("fittinglevy")
 
-# theta <- c(1.2,0.55, 1, 0)
-# pm <- 0
+## Fake data
 
-# theta <- c(1.2,0.55, 1, 0)
-# pm <- 0
-# num_sam <- seq(100, 5000, by = 500)
-# num_sam_ext <- seq(7500, 20000, by = 2500)
-# 
-# QT_list <- list(); ML_list <- list()
-# 
-# for(i in 1:length(num_sam)){
-#   set.seed(100)
-#   print(i)
-#   x <- rstable(num_sam[i], theta[1], theta[2], theta[3], theta[4], pm)
-#   QT_list[[i]] <- McCullochParametersEstim(x)
-#   ML_list[[i]] <- Estim(EstimMethod = "ML", data = x, ComputeCov = TRUE, theta0 = QT_list[[i]])
-#   
-# }
-# 
-# QT_list_ext <- list(); ML_list_ext <- list()
-# 
-# for(i in 1:length(num_sam_ext)){
-#   set.seed(100)
-#   print(i)
-#   x <- rstable(num_sam_ext[i], theta[1], theta[2], theta[3], theta[4], pm)
-#   QT_list_ext[[i]] <- McCullochParametersEstim(x)
-#   ML_list_ext[[i]] <- Estim(EstimMethod = "ML", data = x, ComputeCov = TRUE, theta0 = QT_list_ext[[i]])
-#   
-# }
+theta <- c(1.2,0.55, 1, 0) # true parameter
+pm <- 0
+num_sam <- seq(100, 5000, by = 500) # sampole size
+num_sam_ext <- seq(7500, 20000, by = 2500) # sampole size extended
 
-#save(theta, pm, num_sam, QT_list, ML_list, file = "QT_MLE.Rda")
-#save(num_sam_ext, QT_list_ext, ML_list_ext, file = "QT_MLE_ext.Rda")
+QT_list <- list(); ML_list <- list()
+
+for(i in 1:length(num_sam)){
+  set.seed(100)
+  print(i)
+  x <- rstable(num_sam[i], theta[1], theta[2], theta[3], theta[4], pm)
+  QT_list[[i]] <- McCullochParametersEstim(x)
+  ML_list[[i]] <- Estim(EstimMethod = "ML", data = x, ComputeCov = TRUE, theta0 = QT_list[[i]])
+
+}
+
+QT_list_ext <- list(); ML_list_ext <- list()
+
+for(i in 1:length(num_sam_ext)){
+  set.seed(100)
+  print(i)
+  x <- rstable(num_sam_ext[i], theta[1], theta[2], theta[3], theta[4], pm)
+  QT_list_ext[[i]] <- McCullochParametersEstim(x)
+  ML_list_ext[[i]] <- Estim(EstimMethod = "ML", data = x, ComputeCov = TRUE, theta0 = QT_list_ext[[i]])
+
+}
+
+save(theta, pm, num_sam, QT_list, ML_list, file = "QT_MLE.Rda")
+save(num_sam_ext, QT_list_ext, ML_list_ext, file = "QT_MLE_ext.Rda")
+
+
+###
 load("QT_MLE.Rda")
 load("QT_MLE_ext.Rda")
 
-ML_list_all <- c(ML_list, ML_list_ext)
-QT_list_all <- c(QT_list, QT_list_ext)
-num_sam_all <- c(num_sam, num_sam_ext)
+##
+ML_list_all <- c(ML_list, ML_list_ext) # ML results
+QT_list_all <- c(QT_list, QT_list_ext) # QT results
+num_sam_all <- c(num_sam, num_sam_ext) # sample size
 
 
-QT_SD_list_all <- list()
+## Boostrap SD for QT
+QT_SD_list_all <- list() 
 for(i in 1:length(num_sam_all)){
     set.seed(100)
     print(i)
@@ -59,8 +63,8 @@ qt_sd_fun <- function(x){
 
 QT_SD_list_all <- lapply(QT_SD_list_all,  qt_sd_fun) 
 
+## summarize
 par_table <- list()
-
 
 for(par_ind in 1:4){
   par_min <- unlist(lapply(ML_list_all, function(x) x@confint[par_ind ,1]))
@@ -80,6 +84,8 @@ for(par_ind in 1:4){
                             sam_size = num_sam_all)
 }
 
+
+# plot fuctions
 
 plot_fun <- function(par_table_ind, y_ind, leg_ind){
   
