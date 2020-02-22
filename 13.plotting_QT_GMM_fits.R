@@ -11,15 +11,31 @@ pacman::p_load(ggplot2,gridExtra,reshape2)
 load("Levy_list_GMM.Rda",verbose=T)
 
 # Combine and use only the first of four elements of each list of fits
-GMM = list(LP_year_Levy_list[[1]], LP_g_year_Levy_list[[1]], Zeta_g_year_Levy_list[[1]], LP_size_Levy_list[[1]], LP_g_size_Levy_list[[1]], 
-                                Zeta_g_size_Levy_list[[1]], LP_ind_Levy_list[[1]], LP_g_ind_Levy_list[[1]], Zeta_g_ind_Levy_list[[1]])
+GMM = list(LP_year_Levy_list[[1]], 
+           LP_diff_year_Levy_list[[1]], 
+           #Zeta_g_year_Levy_list[[1]], 
+           LP_size_Levy_list[[1]], 
+           LP_diff_size_Levy_list[[1]], 
+           #Zeta_g_size_Levy_list[[1]], 
+           LP_ind_Levy_list[[1]], 
+           LP_diff_ind_Levy_list[[1]]#, 
+           #Zeta_g_ind_Levy_list[[1]]
+           )
 
 # Load McCulloch QT fits. Note that this overwrites the variables loaded for GMM fits.
 load("Levy_list_QT.Rda",verbose=T)
 
 # Combine and use only the first of four elements of each list of fits
-QT = list(LP_year_Levy_list[[1]], LP_g_year_Levy_list[[1]], Zeta_g_year_Levy_list[[1]], LP_size_Levy_list[[1]], LP_g_size_Levy_list[[1]], 
-                                Zeta_g_size_Levy_list[[1]], LP_ind_Levy_list[[1]], LP_g_ind_Levy_list[[1]], Zeta_g_ind_Levy_list[[1]])
+QT = list(LP_year_Levy_list[[1]], 
+          LP_diff_year_Levy_list[[1]], 
+          #Zeta_g_year_Levy_list[[1]], 
+          LP_size_Levy_list[[1]], 
+          LP_diff_size_Levy_list[[1]], 
+          #Zeta_g_size_Levy_list[[1]], 
+          LP_ind_Levy_list[[1]], 
+          LP_diff_ind_Levy_list[[1]]#, 
+          #Zeta_g_ind_Levy_list[[1]]
+          )
 
 # Extract Soofi indices
 soofiGMM <- unlist(lapply(GMM, function(z) lapply(z, function(y) lapply(y, function(x) x[[6]]))))
