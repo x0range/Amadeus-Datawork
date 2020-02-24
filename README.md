@@ -32,12 +32,12 @@ or build the tar.gz yourself and install that.
 
 # Usage
 
-Make sure all required packages are installed and the necessary data is present. Then run the ```R``` files with names starting with a number ( ```01..R, 02.Amadeus_masterfile.R, ..., 16.Compile_Levy_and_Subbotin_Goodness_Test_Results_into_DF.R`.R``` ) in order. They will produce data, results and plots. For details, see the "Files" section. Finally, run ```17.Goodness_Comparisons.py``` with Python; it will produce one last figure.
+Make sure all required packages are installed and the necessary data is present. Then run the ```R``` files with names starting with a number ( ```01.DEF_KLEMS_2017ii.R, 02.Amadeus_masterfile.R, ..., 16.Compile_Levy_and_Subbotin_Goodness_Test_Results_into_DF.R`.R``` ) in order. They will produce data, results and plots. For details, see the "Files" section. Finally, run ```17.Goodness_Comparisons.py``` with Python; it will produce one last figure.
 
 
 # Files
 
-* ```01..R``` Script for preprocessing of EU KLEMS deflators.
+* ```01.DEF_KLEMS_2017ii.R``` Script for preprocessing of EU KLEMS deflators.
 
 * ```02.Amadeus_masterfile.R``` Script to clean the raw data from by-country Amadeus raw csv files. Variables in these should be labeled as indicated in Appendix A.1 of the paper.
 
